@@ -1,0 +1,54 @@
+======================================================================
+  Experiment log  --  2026-04-22 07:32:04
+======================================================================
+
+  Parameters
+  ----------
+    Method          : dto-iv
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 40
+    N_T (calib)     : 30
+    alpha           : 1.00e-04
+    max_iter        : 300
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : 1.131685e+01
+    grad_norm       : 2.827360e+01
+    n_iter          : 37
+    n_fevals        : 502
+    success         : True
+    message         : CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+    elapsed_calib   : 380.67 s
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+    rec    1  J=2.508479e+01  dJ=     ---  grad=1.400e+01  t_iter=5.50s  t_cumul=5.5s
+    rec    2  J=1.474015e+01  dJ=1.034e+01  grad=9.691e+00  t_iter=1.61s  t_cumul=14.4s
+    rec    3  J=1.409343e+01  dJ=6.467e-01  grad=4.226e+01  t_iter=12.95s  t_cumul=62.6s
+    rec    4  J=1.326599e+01  dJ=8.274e-01  grad=1.605e+01  t_iter=1.81s  t_cumul=154.3s
+    rec    5  J=1.272754e+01  dJ=5.384e-01  grad=4.861e+01  t_iter=1.70s  t_cumul=206.2s
+    rec    6  J=1.259661e+01  dJ=1.309e-01  grad=3.937e+01  t_iter=15.09s  t_cumul=281.3s
+    rec    7  J=1.131699e+01  dJ=1.280e+00  grad=2.828e+01  t_iter=6.95s  t_cumul=294.9s
+    rec    8  J=1.131685e+01  dJ=1.395e-04  grad=2.827e+01  t_iter=14.35s  t_cumul=350.8s
+
+  Sub-step timings (mean over recorded steps)
+  -------------------------------------------
+    t_forward           : mean=0.191s  max=0.340s
+    t_adjoint           : mean=0.291s  max=0.505s
+    t_gradient          : mean=0.001s  max=0.001s
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 300
+    Fine N_T        : 200
+    elapsed_valid   : 6.07 s
+    IV MAE          : 0.025599
+    IV RMSE         : 0.036215
+    IV max error    : 0.111977
+    n valid points  : 70
+
+======================================================================

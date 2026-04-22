@@ -1,0 +1,1218 @@
+% =============================================================================
+%  scheme.tex
+%  Local Volatility Calibration via PDE-Constrained Inverse Problem
+%  A complete mathematical and numerical derivation
+% =============================================================================
+\documentclass[11pt, a4paper]{article}
+
+% --- Packages ---
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{enumitem}
+
+\lstset{
+  basicstyle=\small\ttfamily,
+  breaklines=true,
+  frame=single,
+  language=Python,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{orange!80!black},
+}
+
+% --- Math macros ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\dK}{\Delta K}
+\newcommand{\dT}{\Delta T}
+\newcommand{\pder}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\pderII}[2]{\frac{\partial^2 #1}{\partial #2^2}}
+\newcommand{\norm}[1]{\left\| #1 \right\|}
+\newcommand{\inner}[2]{\left\langle #1,\, #2 \right\rangle}
+\newcommand{\abs}[1]{\left| #1 \right|}
+\newcommand{\Ci}[2]{C_{#1}^{#2}}       % C at node i, time n
+\newcommand{\ui}[2]{u_{#1}^{#2}}       % u at node i, time n
+\newcommand{\intOP}{\mathcal{L}}        % spatial operator
+\newcommand{\Fop}{\mathcal{F}}          % forward operator
+\newcommand{\Omg}{\Omega}
+\newcommand{\al}{\alpha}
+\newcommand{\tht}{\theta}
+\newcommand{\half}{\tfrac{1}{2}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+% --- Theorem environments ---
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{remark}{Remark}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{theorem}{Theorem}[section]
+
+% =============================================================================
+\title{%
+  \textbf{Local Volatility Calibration} \\[6pt]
+  \large A PDE-Constrained Inverse Problem with Tikhonov Regularization:\\
+  Mathematical Derivation and Finite-Difference Discretization
+}
+\author{Project documentation}
+\date{\today}
+% =============================================================================
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Introduction and Problem Statement}
+% =============================================================================
+
+In the Black-Scholes framework every option of every maturity and strike
+would be priced with the same constant volatility parameter. Markets,
+however, exhibit a rich \emph{implied volatility surface}
+$\sigma_\text{BS}(K, T)$: the volatility one must input into the
+Black-Scholes formula to match the observed price of a European call with
+strike $K$ and maturity $T$. Brunner Derman and Kani (1994) and Dupire (1994)
+showed that any arbitrage-free surface $\sigma_\text{BS}(K, T)$ can be
+replicated by a diffusion whose instantaneous volatility is a deterministic
+function $\sigma(S, t)$ of the underlying and time. This function is called
+the \textbf{local volatility surface}.
+
+\subsection{The forward Dupire equation}
+
+The key insight of Dupire is to write down the evolution of European call
+prices $C(K, T)$ as a function of \emph{strike and maturity}, rather than of
+spot and time. Let $S_0$ be the current spot, $r(t)$ the short rate, and
+$q(t)$ the continuous dividend yield. Define
+\[
+  u(K, T) \;=\; \sigma^2(K, T)
+\]
+as the \emph{local variance}. The \textbf{Dupire forward PDE} is
+\begin{equation}\label{eq:dupire}
+  \pder{C}{T}
+  \;=\;
+  \frac{1}{2}\,u(K,T)\,K^2\,\pderII{C}{K}
+  \;-\; (r(T)-q(T))\,K\,\pder{C}{K}
+  \;-\; q(T)\,C,
+\end{equation}
+posed on the domain
+\[
+  \Omg \;=\; (K_{\min},\, K_{\max}) \times (0,\, T_{\max}).
+\]
+
+\paragraph{Initial condition.}
+At $T = 0$, no uncertainty has elapsed, so every call is worth its
+intrinsic value:
+\begin{equation}\label{eq:ic}
+  C(K, 0) \;=\; \max(S_0 - K,\, 0).
+\end{equation}
+
+\paragraph{Boundary conditions.}
+\begin{itemize}
+  \item \textbf{Left} ($K = K_{\min}$, deep in the money): the call
+    converges to the no-arbitrage lower bound
+    \begin{equation}\label{eq:bc_left}
+      C(K_{\min},\, T) \;=\; S_0\,e^{-\int_0^T q(s)\,ds}
+                              \;-\; K_{\min}\,e^{-\int_0^T r(s)\,ds}.
+    \end{equation}
+  \item \textbf{Right} ($K = K_{\max}$, deep out of the money): the call
+    is essentially worthless:
+    \begin{equation}\label{eq:bc_right}
+      C(K_{\max},\, T) \;=\; 0.
+    \end{equation}
+\end{itemize}
+
+\subsection{The inverse problem}
+
+Given market call prices $z(K, T)$ (observed on the grid), the inverse
+problem is: \emph{find the local variance $u = \sigma^2$ such that the
+solution $C$ of the Dupire PDE~\eqref{eq:dupire} matches $z$ as closely as
+possible.}
+
+\paragraph{Functional setting.}
+The state $C$ and the data $z$ both live in $L^2(\Omg)$.  The control is
+$u \in H^1(\Omg) \cap U_\text{ad}$, where the admissible set
+\begin{equation}\label{eq:Uad}
+  U_\text{ad} = \bigl\{ u \in H^1(\Omg) :
+    \sigma_{\min}^2 \leq u(K,T) \leq \sigma_{\max}^2
+    \;\text{ a.e.}\bigr\}
+\end{equation}
+enforces positivity and boundedness.  Requiring $u \in H^1$ (rather than
+just $L^2$) is necessary to obtain a smooth local vol surface; it also
+ensures the Dupire PDE is well-posed for all $u \in U_\text{ad}$.
+
+\paragraph{Optimal-control formulation.}
+We view the calibration as a \textbf{PDE-constrained optimal-control problem}:
+\begin{equation}\label{eq:oc_problem}
+  \min_{\substack{u \in U_\text{ad} \\ C = \Fop(u)}}
+  \;\frac{1}{2}\int_\Omg w\,|C - z|^2 \,dK\,dT,
+\end{equation}
+where the state equation $C = \Fop(u)$ means that $C$ solves the
+Dupire PDE~\eqref{eq:dupire}--\eqref{eq:bc_right}.  The operator
+$\Fop : U_\text{ad} \to L^2(\Omg)$ is the \emph{parameter-to-observable map}.
+
+This problem is \textbf{ill-posed} in the sense of Hadamard because:
+\begin{enumerate}[label=(\roman*)]
+  \item $\Fop$ is compact (in appropriate function spaces), so its range is
+        not closed and small perturbations in $z$ can cause arbitrarily large
+        changes in $u$.
+  \item The inverse of $\Fop$ is not bounded: distinct local vol surfaces
+        can produce nearly identical call price surfaces.
+\end{enumerate}
+Regularization is therefore essential for a stable numerical solution.
+
+Formally, define the \textbf{forward operator}
+\begin{equation}
+  \Fop : u \;\longmapsto\; C,
+\end{equation}
+where $C$ is the solution of~\eqref{eq:dupire}--\eqref{eq:bc_right}
+for a given $u$. We seek
+\begin{equation}\label{eq:least_squares}
+  \min_{u} \;\frac{1}{2}\,\norm{\Fop(u) - z}_{L^2(\Omg,\,w)}^2,
+\end{equation}
+where $w(K, T) \geq 0$ is a weight function that can down-weight illiquid
+or missing observations. This problem is ill-posed in the sense of Hadamard:
+the solution is not unique and does not depend continuously on the data.
+Regularization is therefore essential.
+
+% =============================================================================
+\section{Tikhonov Regularization}
+% =============================================================================
+
+We stabilize the problem by adding a \textbf{Tikhonov penalty} that
+penalizes deviation of $u$ from a prior guess $u^*$ in the $H^1(\Omg)$
+norm. The regularized objective is
+\begin{equation}\label{eq:Jalpha}
+  J_\alpha(u)
+  \;=\;
+  \underbrace{
+    \frac{1}{2}
+    \int_\Omg w(K,T)\,\bigl[\Fop(u)(K,T) - z(K,T)\bigr]^2
+    \,dK\,dT
+  }_{\text{data misfit } \mathcal{M}(u)}
+  \;+\;
+  \underbrace{
+    \frac{\alpha}{2}
+    \int_\Omg
+    \Bigl[
+      (u - u^*)^2
+      + \Bigl|\pder{(u-u^*)}{K}\Bigr|^2
+      + \Bigl|\pder{(u-u^*)}{T}\Bigr|^2
+    \Bigr]
+    dK\,dT
+  }_{\text{Tikhonov penalty } \mathcal{R}_\alpha(u)}.
+\end{equation}
+The parameter $\alpha > 0$ controls the trade-off between data fit and
+regularity. As $\alpha \to 0$ the problem approaches the (ill-posed) least
+squares problem; as $\alpha \to \infty$ the solution is forced to $u^*$.
+
+\begin{remark}[$H^1$ vs.\ $L^2$ penalty]
+The $H^1$ penalty (rather than a plain $L^2$ penalty on $u - u^*$) is
+chosen for two reasons:
+\begin{enumerate}[label=(\roman*)]
+  \item It forces the calibrated $u$ to have bounded partial derivatives,
+        producing a \emph{smooth} local vol surface.  This is important
+        because the Dupire PDE involves second derivatives of $C$ in $K$,
+        so a rough $u$ can cause large numerical errors.
+  \item The $H^1$ gradient (a second-order elliptic operator) provides
+        stronger regularization in regions of the grid where market data are
+        sparse (e.g.\ very short or very long maturities), smoothly
+        interpolating between data-rich and data-poor regions.
+\end{enumerate}
+\end{remark}
+
+\paragraph{Choosing $\alpha$.}
+The regularization parameter $\alpha$ must balance two competing objectives:
+\begin{itemize}
+  \item Small $\alpha$ ($\sim 10^{-5}$--$10^{-4}$): closer fit to market IVs,
+        but the calibrated surface may develop spurious spikes and oscillations
+        in regions where market data are noisy or sparse.
+  \item Large $\alpha$ ($\sim 10^{-2}$--$10^{-1}$): smooth surface close to
+        the prior $u^*$, but may systematically over-smooth and fail to capture
+        genuine skew or term-structure features of the market.
+\end{itemize}
+A practical approach is to fix $u^* = \bar{\sigma}^2$ (the squared median
+market IV) and run the sweep script (\texttt{experiments/sweep.py}) to
+compare IV MAE across several values of $\alpha$.
+
+The calibration problem is then
+\begin{equation}\label{eq:optproblem}
+  \min_{u \in U_\text{ad}} \; J_\alpha(u),
+\end{equation}
+where the admissible set (repeated from~\eqref{eq:Uad}) enforces positivity:
+\[
+  U_\text{ad} = \bigl\{ u \in H^1(\Omg) :
+    \sigma_{\min}^2 \leq u(K,T) \leq \sigma_{\max}^2
+    \text{ a.e.\ in } \Omg \bigr\}.
+\]
+In practice we take $\sigma_{\min} = 0.01$ and $\sigma_{\max} = 1.5$.
+
+\subsection{First-order optimality (KKT) conditions}
+
+At a local minimizer $u^* \in U_\text{ad}$, the KKT stationarity condition
+is (formally, before discretization):
+\begin{equation}\label{eq:kkt}
+  \inner{\nabla_{u} J_\alpha(u^*)}{v - u^*}_{H^1}
+  \;\geq\; 0
+  \qquad \forall\, v \in U_\text{ad}.
+\end{equation}
+In the unconstrained interior $\{u^* \in (\sigma_{\min}^2, \sigma_{\max}^2)\}$,
+this reduces to $\nabla_{u} J_\alpha(u^*) = 0$, i.e.\
+\begin{equation}\label{eq:kkt_free}
+  \underbrace{\Fop'(u^*)^* \bigl[w\,(\Fop(u^*) - z)\bigr]}_{\text{adjoint-based misfit gradient}}
+  \;+\;
+  \underbrace{\alpha\,\bigl(-\Delta + I\bigr)(u^* - u_0^*)}_{\text{Tikhonov gradient}}
+  \;=\; 0,
+\end{equation}
+where $\Fop'(u^*)^*$ is the $L^2$-adjoint of the linearized forward
+operator, and $-\Delta + I$ is the elliptic operator associated with the
+$H^1$ norm (automatically enforcing homogeneous Neumann BCs on $\partial\Omg$).
+The adjoint $\Fop'(u^*)^*$ is computed efficiently via the adjoint PDE
+(Section~\ref{sec:adjoint}).  At constrained nodes, the complementarity
+slackness conditions apply:
+\[
+  u^* = \sigma_{\min}^2 \;\Rightarrow\; \nabla_u J_\alpha \geq 0, \qquad
+  u^* = \sigma_{\max}^2 \;\Rightarrow\; \nabla_u J_\alpha \leq 0.
+\]
+These are handled automatically by the L-BFGS-B box-constraint projection.
+
+% =============================================================================
+\section{Finite-Difference Discretization}
+% =============================================================================
+
+\subsection{Grid}
+
+We discretize $\Omg$ with a uniform rectangular grid:
+\begin{align*}
+  K_i &= K_{\min} + i\,\dK, \quad i = 0, 1, \ldots, N_K, \quad
+    \dK = \frac{K_{\max} - K_{\min}}{N_K}, \\
+  T_n &= n\,\dT, \quad n = 0, 1, \ldots, N_T, \quad
+    \dT = \frac{T_{\max}}{N_T}.
+\end{align*}
+We denote $C_i^n \approx C(K_i, T_n)$ and $u_i^n \approx u(K_i, T_n)$.
+The discrete state array has shape $(N_K+1) \times (N_T+1)$.
+
+\subsection{Spatial operator}
+
+At each interior node $i \in \{1, \ldots, N_K - 1\}$, the right-hand side
+of the Dupire equation~\eqref{eq:dupire} is approximated by centered differences:
+\begin{align}\label{eq:operator}
+  \bigl[\intOP(u)\,C\bigr]_i
+  &= \frac{u_i K_i^2}{2\,\dK^2}
+     \bigl(C_{i-1} - 2\,C_i + C_{i+1}\bigr) \notag \\
+  &\quad
+  - \frac{(r-q)\,K_i}{2\,\dK}
+     \bigl(C_{i+1} - C_{i-1}\bigr) \notag \\
+  &\quad - q\, C_i.
+\end{align}
+Define the coefficients
+\begin{equation}\label{eq:alphabeta}
+  \alpha_i = \frac{u_i K_i^2}{2\,\dK^2}, \qquad
+  \beta_i  = \frac{(r-q)\,K_i}{2\,\dK},
+\end{equation}
+so that
+\begin{equation}\label{eq:opcoeffs}
+  \bigl[\intOP(u)\,C\bigr]_i
+  = (\alpha_i + \beta_i)\,C_{i-1}
+  + (-2\alpha_i - q)\,C_i
+  + (\alpha_i - \beta_i)\,C_{i+1}.
+\end{equation}
+The tridiagonal matrix $L(u)$ of size $(N_K-1) \times (N_K-1)$
+(acting on the interior nodes $i = 1, \ldots, N_K-1$) has entries
+\[
+  \ell_i = \alpha_i + \beta_i,
+  \quad
+  d_i   = -2\alpha_i - q,
+  \quad
+  h_i   = \alpha_i - \beta_i.
+\]
+
+\subsection{Theta-scheme time stepping}
+
+We integrate in $T$ using the $\theta$-scheme (Crank-Nicolson for
+$\theta = \tfrac{1}{2}$):
+\begin{equation}\label{eq:theta}
+  \frac{C^{n+1} - C^n}{\dT}
+  = \theta\,\intOP(u_\text{col}^n)\,C^{n+1}
+    + (1-\theta)\,\intOP(u_\text{col}^n)\,C^n,
+\end{equation}
+where we average the local variance at the two endpoints of the time step:
+\begin{equation}\label{eq:ucol}
+  u_{\text{col},i}^n = \frac{u_i^n + u_i^{n+1}}{2}.
+\end{equation}
+
+\noindent
+Rearranging~\eqref{eq:theta} for the interior nodes gives the linear system
+\begin{equation}\label{eq:linsys}
+  A^n\,C_\text{int}^{n+1} \;=\; B^n\,C_\text{int}^n \;+\; b^n,
+\end{equation}
+where the matrices $A^n, B^n$ of size $(N_K-1)\times(N_K-1)$ are
+\begin{equation}\label{eq:AB}
+  A^n = I - \theta\,\dT\,L(u_\text{col}^n),
+  \qquad
+  B^n = I + (1-\theta)\,\dT\,L(u_\text{col}^n),
+\end{equation}
+$C_\text{int}^n = (C_1^n, \ldots, C_{N_K-1}^n)^\top$ denotes the
+\emph{interior} nodes, and $b^n$ is the boundary correction vector
+\begin{equation}\label{eq:bcorrect}
+\begin{split}
+  b^n_1 &= \theta\,\dT\,\ell_1\,C_0^{n+1}
+          + (1-\theta)\,\dT\,\ell_1\,C_0^n, \\
+  b^n_{N_K-1} &= \theta\,\dT\,h_{N_K-1}\,C_{N_K}^{n+1}
+               + (1-\theta)\,\dT\,h_{N_K-1}\,C_{N_K}^n, \\
+  b^n_j &= 0, \quad j \notin \{1, N_K-1\}.
+\end{split}
+\end{equation}
+All other entries of $b^n$ are zero. Here $C_0^n = C(K_{\min}, T_n)$ and
+$C_{N_K}^n = C(K_{\max}, T_n) = 0$ are prescribed by the boundary
+conditions~\eqref{eq:bc_left}--\eqref{eq:bc_right}.
+
+\begin{remark}[Boundary correction indexing]
+The sub-diagonal coefficient $\ell_1$ in the first row of $L$ is the
+coefficient of $C_0$ in equation $i=1$, i.e.\ $\ell_1 = \alpha_1 + \beta_1$.
+Correct indexing of $b^n$ is critical: an off-by-one error here introduces
+a systematic bias in the gradient computation.
+\end{remark}
+
+\paragraph{Banded solver.}
+Since $A^n$ is tridiagonal, the system~\eqref{eq:linsys} is solved at
+each time step using \texttt{scipy.linalg.solve\_banded} in $\mathcal{O}(N_K)$
+operations.
+
+% =============================================================================
+\section{Discrete Objective Functional}
+% =============================================================================
+
+\subsection{Data misfit}
+
+The data misfit is discretized by the midpoint rule (equivalent to the
+trapezoidal rule on a uniform grid):
+\begin{equation}\label{eq:misfit_disc}
+  \mathcal{M}_h(u) \;=\;
+  \frac{1}{2}\,\dK\,\dT
+  \sum_{i=0}^{N_K}\sum_{n=0}^{N_T}
+    w_{i,n}\,\bigl(C_i^n - z_i^n\bigr)^2,
+\end{equation}
+where $w_{i,n} = 0$ for missing data (NaN), for $n=0$ (initial condition),
+and for boundary nodes $i=0$ and $i=N_K$.
+
+\subsection{Tikhonov penalty}
+
+The $H^1$ penalty is discretized using forward finite differences:
+\begin{equation}\label{eq:tikhonov_disc}
+\begin{split}
+  \mathcal{R}_h(u) \;=\;
+  \frac{\alpha}{2}\,\dK\,\dT
+  \sum_{i,n} \Bigl[
+    &(u_{i,n} - u^*_{i,n})^2 \\
+    + &\left(\frac{u_{i+1,n} - u_{i,n}}{\dK}\right)^2
+    + \left(\frac{u_{i,n+1} - u_{i,n}}{\dT}\right)^2
+  \Bigr].
+\end{split}
+\end{equation}
+The full discrete objective is
+\begin{equation}\label{eq:Jalpha_disc}
+  J_h(u) \;=\; \mathcal{M}_h(u) \;+\; \mathcal{R}_h(u).
+\end{equation}
+
+\subsection{Gradient of the Tikhonov term}
+
+Differentiating $\mathcal{R}_h$ with respect to $u_{i,n}$ gives
+\begin{equation}\label{eq:grad_R}
+  \pder{\mathcal{R}_h}{u_{i,n}}
+  = \alpha\,\dK\,\dT\,
+  \Bigl[
+    d_{i,n}
+    + \bigl(-\Delta_K^{(2)} d\bigr)_{i,n}
+    + \bigl(-\Delta_T^{(2)} d\bigr)_{i,n}
+  \Bigr],
+\end{equation}
+where $d_{i,n} = u_{i,n} - u^*_{i,n}$ and $-\Delta_K^{(2)}$ is the
+discrete negative Laplacian in the $K$-direction with homogeneous Neumann
+boundary conditions (similarly for $T$). Explicitly:
+\[
+  \bigl(-\Delta_K^{(2)} d\bigr)_{i,n}
+  = \frac{2d_{i,n} - d_{i-1,n} - d_{i+1,n}}{\dK^2},
+  \quad i = 1, \ldots, N_K - 1.
+\]
+At the $K$-boundaries ($i=0$ and $i=N_K$) one-sided differences are used.
+
+% =============================================================================
+\section{Adjoint-Based Gradient Computation}
+% =============================================================================
+
+Computing $\nabla_u J_h$ by finite differences would require $\mathcal{O}((N_K+1)(N_T+1))$ PDE solves. The adjoint method reduces this to \emph{one forward solve and one backward (adjoint) solve}, regardless of the number of degrees of freedom.
+
+\subsection{Lagrangian formulation}
+
+We follow the \textbf{Discretize-then-Optimize (DtO)} approach: we
+first discretize the problem, then derive the optimality conditions of the
+discrete Lagrangian. This guarantees that the computed gradient is the
+\emph{exact} gradient of the discrete objective $J_h$.
+
+Introduce Lagrange multipliers $p^n = (p_1^n, \ldots, p_{N_K-1}^n)^\top$
+(the adjoint variable) for each time step. The discrete Lagrangian is
+\begin{equation}\label{eq:Lagrangian}
+  \mathcal{L}(u, C, p)
+  \;=\; J_h(u, C)
+  \;+\; \sum_{n=0}^{N_T-1}
+    (p^{n+1})^\top
+    \bigl(A^n\,C_\text{int}^{n+1} - B^n\,C_\text{int}^n - b^n\bigr).
+\end{equation}
+
+\subsection{Stationarity conditions}
+
+\paragraph{Stationarity with respect to $C^k$ (for $k \geq 1$).}
+Setting $\partial \mathcal{L} / \partial C_\text{int}^k = 0$ yields:
+
+\medskip
+\textbf{Terminal condition} ($k = N_T$):
+\begin{equation}\label{eq:adj_terminal}
+  (A^{N_T-1})^\top p^{N_T}
+  \;=\; -\nabla_{C^{N_T}} J_h,
+\end{equation}
+where
+\begin{equation}\label{eq:dJdC}
+  \bigl(\nabla_{C^k} J_h\bigr)_j
+  \;=\; \dK\,\dT\,w_{j+1,k}\,(C_{j+1}^k - z_{j+1}^k),
+  \quad j = 0, \ldots, N_K-2,
+\end{equation}
+(the $+1$ offset maps interior index $j$ to global index $i = j+1$).
+
+\medskip
+\textbf{Interior steps} ($k = N_T - 1, \ldots, 1$):
+\begin{equation}\label{eq:adj_internal}
+  (A^{k-1})^\top p^k
+  \;=\; (B^k)^\top p^{k+1} - \nabla_{C^k} J_h.
+\end{equation}
+
+\begin{remark}[Boundary conditions for the adjoint]
+The adjoint variable $p$ satisfies homogeneous Dirichlet conditions
+$p_0^n = p_{N_K}^n = 0$ at all times, consistent with the state boundary
+conditions. These are automatically enforced since $p$ is defined only on
+interior nodes.
+\end{remark}
+
+\subsection{Computing the adjoint transpose}
+
+Both \eqref{eq:adj_terminal} and \eqref{eq:adj_internal} require solving
+linear systems with the \emph{transpose} $(A^n)^\top$. Since $A^n$ is
+tridiagonal with sub-diagonal $\ell$, diagonal $d$, and super-diagonal $h$,
+the transpose $(A^n)^\top$ has:
+\begin{itemize}
+  \item Super-diagonal at position $(j-1,\,j)$: $(A^\top)_{j-1,j} = A_{j,j-1} = -\theta\dT\,\ell_j$.
+  \item Diagonal: unchanged.
+  \item Sub-diagonal at position $(j+1,\,j)$: $(A^\top)_{j+1,j} = A_{j,j+1} = -\theta\dT\,h_j$.
+\end{itemize}
+In \texttt{scipy.linalg.solve\_banded} format with bandwidth $(1,1)$:
+\begin{equation}\label{eq:AT_banded}
+\begin{split}
+  \texttt{ab}[0,\,j] &= (A^\top)_{j-1,j} = -\theta\dT\,\ell_j,
+    \quad j = 1, \ldots, N_K-2,\\
+  \texttt{ab}[1,\,j] &= (A^\top)_{j,j}, \\
+  \texttt{ab}[2,\,j] &= (A^\top)_{j+1,j} = -\theta\dT\,h_j,
+    \quad j = 0, \ldots, N_K-3.
+\end{split}
+\end{equation}
+Equivalently: \texttt{ab}$[0, 1:] = \ell[1:]$ and
+\texttt{ab}$[2, :-1] = h[:-1]$ in 0-indexed array notation.
+
+\paragraph{Important indexing note.}
+In \texttt{scipy}'s banded format, \texttt{ab}$[0,j]$ is the element of the
+\emph{column} $j$ in the row \emph{above} the diagonal, i.e.\ the element
+at row $j-1$. Therefore \texttt{ab}$[0, 1:] = \ell[1:]$ (not $\ell[:-1]$)
+and \texttt{ab}$[2, :-1] = h[:-1]$ (not $h[1:]$). Off-by-one errors at this
+point produce a subtly wrong adjoint that is not immediately detectable.
+
+\subsection{Backward sweep algorithm}
+
+\begin{enumerate}
+  \item \textbf{Solve for $p^{N_T}$}: assemble the RHS
+    $-\nabla_{C^{N_T}} J_h$ and solve the tridiagonal system~\eqref{eq:adj_terminal}.
+  \item \textbf{For $k = N_T-1, N_T-2, \ldots, 1$}:
+    \begin{enumerate}
+      \item Compute $(B^k)^\top p^{k+1}$ by direct multiplication:
+        \begin{equation}\label{eq:BT_mult}
+          \bigl[(B^k)^\top p^{k+1}\bigr]_j
+          = B^k_{j,j}\,p^{k+1}_j
+            + B^k_{j+1,j}\,p^{k+1}_{j+1}
+            + B^k_{j-1,j}\,p^{k+1}_{j-1}.
+        \end{equation}
+      \item Assemble $\text{rhs} = (B^k)^\top p^{k+1} - \nabla_{C^k} J_h$.
+      \item Solve $(A^{k-1})^\top p^k = \text{rhs}$.
+    \end{enumerate}
+  \item $p^0$ is not computed (no step $-1 \to 0$ exists).
+\end{enumerate}
+
+\subsection{Gradient of the PDE misfit}
+
+With the adjoint $p$ in hand, the gradient of the misfit term $\mathcal{M}_h$
+with respect to $u_{i,n}$ is assembled from the stationarity condition
+$\partial \mathcal{L} / \partial u_{i,n} = 0$.
+
+Since $u_i^n$ enters through $u_{\text{col},i}^{n-1} = (u_i^{n-1} + u_i^n)/2$
+(step $n-1 \to n$) and $u_{\text{col},i}^n = (u_i^n + u_i^{n+1})/2$
+(step $n \to n+1$), we need to differentiate the matrices $A^n$ and $B^n$
+with respect to $u_{\text{col},i}^n$.
+
+From~\eqref{eq:alphabeta}--\eqref{eq:opcoeffs}, the only row of $L(u_\text{col}^n)$
+that depends on $u_{\text{col},i}^n$ is row $j = i-1$ (interior index).
+The dependence is:
+\[
+  \pder{\alpha_i}{u_{\text{col},i}} = \frac{K_i^2}{2\,\dK^2}.
+\]
+Let $a_i = K_i^2 / (2\,\dK^2)$ denote this derivative. Then
+\begin{align}
+  \bigl[\pder{A^n}{u_{\text{col},i}^n}\,C^{n+1}\bigr]_{j}
+  &= -\theta\,\dT\,a_i\,\bigl(C_{i-1}^{n+1} - 2C_i^{n+1} + C_{i+1}^{n+1}\bigr),
+  \quad j = i-1,
+  \label{eq:dAC}\\
+  \bigl[\pder{B^n}{u_{\text{col},i}^n}\,C^n\bigr]_{j}
+  &= (1-\theta)\,\dT\,a_i\,\bigl(C_{i-1}^n - 2C_i^n + C_{i+1}^n\bigr),
+  \quad j = i-1.
+  \label{eq:dBC}
+\end{align}
+All other rows are zero. The gradient of the Lagrangian w.r.t.\
+$u_{\text{col},i}^n$ is therefore
+\begin{equation}\label{eq:grad_ucol}
+  \pder{\mathcal{L}}{u_{\text{col},i}^n}
+  \;=\; p_{i-1}^{n+1}
+    \Bigl[
+      (1-\theta)\,\dT\,a_i\,\delta^2_K C^n_i
+      + \theta\,\dT\,a_i\,\delta^2_K C^{n+1}_i
+    \Bigr],
+\end{equation}
+where $\delta^2_K C_i = C_{i-1} - 2C_i + C_{i+1}$ is the second
+centered difference. By the chain rule
+$\partial u_{\text{col},i}^n / \partial u_i^n = \tfrac{1}{2}$ and
+$\partial u_{\text{col},i}^n / \partial u_i^{n+1} = \tfrac{1}{2}$,
+so the gradient accumulates as
+\begin{equation}\label{eq:grad_pde}
+\begin{split}
+  \pder{\mathcal{M}_h}{u_i^n}
+  &\mathrel{+}=
+  \tfrac{1}{2}\,p_{i-1}^{n+1}\,\dT\,a_i
+  \bigl[
+    (1-\theta)\,\delta^2_K C_i^n - \theta\,\delta^2_K C_i^{n+1}
+  \bigr] \\
+  &\quad \text{(from step $n \to n+1$, if $n < N_T$)},
+\end{split}
+\end{equation}
+\begin{equation}\label{eq:grad_pde2}
+\begin{split}
+  \pder{\mathcal{M}_h}{u_i^n}
+  &\mathrel{+}=
+  \tfrac{1}{2}\,p_{i-1}^{n}\,\dT\,a_i
+  \bigl[
+    (1-\theta)\,\delta^2_K C_i^{n-1} - \theta\,\delta^2_K C_i^{n}
+  \bigr] \\
+  &\quad \text{(from step $n-1 \to n$, if $n \geq 1$)}.
+\end{split}
+\end{equation}
+
+\begin{remark}[Why the notation differs from the code]
+In the implementation, the loop runs over steps $n = 0, \ldots, N_T-1$
+(the step from $T_n$ to $T_{n+1}$) and accumulates into both $u[\cdot, n]$
+and $u[\cdot, n+1]$ with factor $\tfrac{1}{2}$. Written in the loop variable $n$:
+\[
+  \text{contrib} = p_\text{int}^{n+1} \cdot
+    \bigl[-(1-\theta)\,\dT\,a\,\delta^2_K C^n
+          + \theta\,\dT\,a\,\delta^2_K C^{n+1}\bigr].
+\]
+The sign convention follows from the Lagrangian stationarity
+$\partial \mathcal{L}/\partial u_\text{col} = 0$, which gives $-\partial J_h/\partial u_\text{col}$
+plus the PDE term; the gradient of $J_h$ w.r.t.\ $u$ equals the negative
+of the stationarity residual, yielding the formula above.
+\end{remark}
+
+\subsection{Full gradient}
+
+The complete gradient of $J_h$ is
+\begin{equation}\label{eq:grad_total}
+  \nabla_u J_h = \underbrace{\nabla_u \mathcal{M}_h}_{\text{PDE term, via adjoint}}
+               + \underbrace{\nabla_u \mathcal{R}_h}_{\text{Tikhonov term, explicit}}.
+\end{equation}
+Boundary nodes ($i=0$ and $i=N_K$) are held fixed; their gradient entries
+are set to zero.
+
+% =============================================================================
+\section{Gradient Verification}
+% =============================================================================
+
+Before running the optimizer, we validate the adjoint gradient with a
+\textbf{Taylor test} (first-order finite difference check). Choose a random
+direction $v \in \R^{(N_K+1)(N_T+1)}$ and compute:
+\begin{equation}\label{eq:taylor_test}
+  \rho(\varepsilon)
+  \;=\;
+  \frac{J_h(u_0 + \varepsilon\,v) - J_h(u_0)}{\varepsilon}
+  \;\Big/\;
+  \inner{\nabla_u J_h(u_0)}{v}.
+\end{equation}
+For the correct gradient, $\rho(\varepsilon) \to 1$ as $\varepsilon \to 0$.
+
+\paragraph{Observed behaviour.}
+On the test grid ($N_K = 40$, $N_T = 30$) with a random perturbation $v$:
+\begin{center}
+\begin{tabular}{rrc}
+\toprule
+$\varepsilon$ & FD approximation & Ratio $\rho$ \\
+\midrule
+$10^{-2}$ & $5.95 \times 10^1$ & 2.126 \\
+$10^{-3}$ & $3.06 \times 10^1$ & 1.094 \\
+$10^{-4}$ & $2.83 \times 10^1$ & 1.009 \\
+$10^{-5}$ & $2.80 \times 10^1$ & 1.001 \\
+$10^{-6}$ & $2.80 \times 10^1$ & 1.000 \\
+\bottomrule
+\end{tabular}
+\end{center}
+The ratio converges to 1 from above, confirming first-order accuracy.
+The deviation at large $\varepsilon$ is the expected $\mathcal{O}(\varepsilon)$
+second-order remainder from the Taylor expansion.
+
+% =============================================================================
+\section{Optimization Algorithm}
+\label{sec:algorithm}
+% =============================================================================
+
+The constrained problem~\eqref{eq:optproblem} is solved with the
+\textbf{L-BFGS-B} algorithm (Byrd, Lu, Nocedal \& Zhu, 1995), which handles
+bound constraints $\sigma_{\min}^2 \leq u \leq \sigma_{\max}^2$ directly
+via a projected quasi-Newton step.
+
+\subsection{Why L-BFGS-B?}
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Box constraints}: the bounds $u \in U_\text{ad}$ are enforced
+        natively by the algorithm, avoiding penalty reformulations.
+  \item \textbf{Exact gradient}: our adjoint solver provides the exact gradient
+        $\nabla_u J_h$ at cost $\mathcal{O}(N_K N_T)$, which is the same as
+        a single forward solve.  This makes gradient-based methods far more
+        efficient than derivative-free alternatives.
+  \item \textbf{Limited memory}: the full Hessian $\nabla^2 J_h \in
+        \R^{(N_K+1)(N_T+1) \times (N_K+1)(N_T+1)}$ is never formed.  Instead,
+        L-BFGS-B maintains $m$ step/gradient pairs and approximates the inverse
+        Hessian via the \emph{two-loop recursion} described below.
+\end{enumerate}
+
+\subsection{The two-loop recursion (L-BFGS-B Hessian approximation)}
+
+At iteration $k$, L-BFGS-B maintains the $m$ most recent pairs
+\[
+  s_j = u^{(k-m+j+1)} - u^{(k-m+j)}, \quad
+  y_j = \nabla J_h^{(k-m+j+1)} - \nabla J_h^{(k-m+j)},
+  \qquad j = 0, \ldots, m-1.
+\]
+The search direction $d = -H_k \nabla J_h^{(k)}$ is computed without
+forming $H_k$ explicitly via:
+
+\begin{lstlisting}[language=Python, caption={L-BFGS-B two-loop recursion (pseudocode)}]
+q = grad_J.copy()
+alpha_list = []
+for j in reversed(range(m)):          # first loop (newest to oldest)
+    rho_j = 1.0 / dot(y[j], s[j])
+    a_j   = rho_j * dot(s[j], q)
+    alpha_list.append(a_j)
+    q    -= a_j * y[j]
+
+# Scale by initial Hessian approximation H_0 = gamma * I
+gamma = dot(s[-1], y[-1]) / dot(y[-1], y[-1])
+r = gamma * q
+
+for j in range(m):                     # second loop (oldest to newest)
+    rho_j = 1.0 / dot(y[j], s[j])
+    beta_j = rho_j * dot(y[j], r)
+    r     += s[j] * (alpha_list[m-1-j] - beta_j)
+
+d = -r                                 # L-BFGS-B search direction
+\end{lstlisting}
+
+After computing $d$, L-BFGS-B projects it onto the feasible set
+$U_\text{ad}$ and performs a backtracking Wolfe-condition line search
+to find the step length $\eta_k$:
+\[
+  u^{(k+1)} = P_{U_\text{ad}}\!\bigl(u^{(k)} + \eta_k\,d\bigr),
+\]
+where $P_{U_\text{ad}}$ denotes the component-wise projection onto
+$[\sigma_{\min}^2, \sigma_{\max}^2]$.
+
+\subsection{Full algorithm}
+
+\begin{enumerate}
+  \item \textbf{Initialization}: set $u^{(0)} = u^* \in U_\text{ad}$
+        (prior flat vol surface: $u^{(0)} = \bar{\sigma}^2$,
+        $\bar{\sigma} = \text{median}(\sigma_\text{BS}^{\text{market}})$).
+  \item \textbf{For each iteration $k = 0, 1, 2, \ldots$}:
+    \begin{enumerate}
+      \item \textbf{Forward PDE solve}: $C^{(k)} = \Fop(u^{(k)})$
+            via the $\theta$-scheme~\eqref{eq:linsys}.
+            Cost: $\mathcal{O}(N_K N_T)$.
+      \item \textbf{Objective evaluation}: $J_h^{(k)} = J_h(u^{(k)}, C^{(k)})$
+            via~\eqref{eq:Jalpha_disc}. Cost: $\mathcal{O}(N_K N_T)$.
+      \item \textbf{Adjoint PDE solve}: $p^{(k)}$ via the backward
+            sweep~\eqref{eq:adj_terminal}--\eqref{eq:adj_internal}.
+            Cost: $\mathcal{O}(N_K N_T)$.
+      \item \textbf{Gradient assembly}: $g^{(k)} = \nabla_u J_h^{(k)}$ via
+            \eqref{eq:grad_pde}--\eqref{eq:grad_total}.
+            Cost: $\mathcal{O}(N_K N_T)$.
+      \item \textbf{Check stopping criteria}:
+            \begin{itemize}
+              \item $\|g^{(k)}\|_\infty < g_\text{tol}$ \quad (\emph{gradient converged}),
+              \item $|J_h^{(k)} - J_h^{(k-1)}| \,/\, \max(|J_h^{(k)}|,\,1) < f_\text{tol}$
+                    \quad (\emph{function value stagnated}),
+              \item $k \geq k_{\max}$ \quad (\emph{iteration limit}).
+            \end{itemize}
+            If any criterion is met, stop.
+      \item \textbf{L-BFGS-B update}: use $(J_h^{(k)},\, g^{(k)})$ and the
+            stored pairs $\{(s_j, y_j)\}_{j=0}^{m-1}$ to compute the search
+            direction $d^{(k)}$ (two-loop recursion above).
+      \item \textbf{Wolfe line search}: find $\eta_k > 0$ satisfying the
+            Wolfe conditions; set $u^{(k+1)} = P_{U_\text{ad}}(u^{(k)} + \eta_k d^{(k)})$.
+      \item \textbf{Update pairs}: store $(s_k, y_k)$; discard oldest pair
+            if the memory buffer is full (i.e.\ $k \geq m$).
+    \end{enumerate}
+\end{enumerate}
+
+\subsection{Per-iteration cost}
+
+Each call to the objective + gradient $(J_h^{(k)},\, g^{(k)})$ requires:
+\begin{itemize}
+  \item 1 forward solve: $N_T$ tridiagonal systems of size $N_K - 1$
+        $\;\to\; \mathcal{O}(N_K N_T)$,
+  \item 1 adjoint solve: $N_T$ tridiagonal systems of size $N_K - 1$
+        $\;\to\; \mathcal{O}(N_K N_T)$,
+  \item Gradient assembly: $\mathcal{O}(N_K N_T)$.
+\end{itemize}
+The L-BFGS-B update (two-loop) costs $\mathcal{O}(m \cdot N_K N_T)$.
+Total memory: $\mathcal{O}((m+4) \cdot N_K N_T)$ (for $u, C, p, z, w$ plus
+$m$ stored step/gradient pairs).
+
+\subsection{Parameter guide}
+\label{sec:params}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Parameter & Symbol & Default & Effect \\
+\midrule
+Strike grid points   & $N_K$ & 80 & Spatial accuracy; cost $\propto N_K$ \\
+Maturity grid points & $N_T$ & 60 & Temporal accuracy; cost $\propto N_T$ \\
+Theta-scheme         & $\theta$ & 0.5 & 0.5 = Crank-Nicolson (2nd order) \\
+Regularisation       & $\alpha$ & $10^{-3}$ & Smoothness vs.\ fit trade-off \\
+Vol lower bound      & $\sigma_{\min}$ & 0.01 & Prevents $u \leq 0$ \\
+Vol upper bound      & $\sigma_{\max}$ & 1.5 & Prevents degenerate local vol \\
+Gradient tolerance   & $g_\text{tol}$ & $10^{-6}$ & Stopping: $\|g\|_\infty < g_\text{tol}$ \\
+Function tolerance   & $f_\text{tol}$ & $10^{-10}$ & Stopping: relative $|ΔJ|$ \\
+Max iterations       & $k_{\max}$ & 300 & Hard iteration limit \\
+BFGS memory          & $m$ & 10 & Pairs stored in quasi-Newton Hessian \\
+Max line-search      & $\ell_{\max}$ & 50 & Wolfe line-search evaluations \\
+\midrule
+Fine grid (valid.)   & $N_K^f$, $N_T^f$ & 300, 200 & Used only for final IV back-out \\
+Vega floor           & $\varepsilon_v$ & $10^{-4}$ & $w_{i,n} = 1/\max(\text{Vega}, \varepsilon_v)^2$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{remark}[Coarse calibration grid vs.\ fine validation grid]
+During the L-BFGS-B loop we use a \emph{coarse} grid ($N_K \times N_T$)
+for speed.  For the \textbf{final quality check}, the calibrated local vol
+surface $\sigma_\text{opt}(K,T)$ is re-interpolated onto a \emph{fine} grid
+($N_K^f \times N_T^f$), the Dupire PDE is solved once more, and model call
+prices are inverted to implied vols.  This two-stage approach allows fast
+parameter exploration while maintaining high-fidelity final metrics.
+\end{remark}
+
+% =============================================================================
+\section{Numerical Scheme Summary}
+% =============================================================================
+
+We collect here all the discrete formulas for ease of reference.
+
+\subsection{Forward (state) sweep}
+
+\textbf{Input:} $u \in \R^{(N_K+1)\times(N_T+1)}$,
+grid, boundary conditions, rates.
+
+\textbf{Initialization:}
+$C_i^0 = \max(S_0 - K_i,\, 0)$,\quad
+$C_0^n = S_0 B_q(T_n) - K_{\min} B_r(T_n)$,\quad
+$C_{N_K}^n = 0$.
+
+\textbf{For} $n = 0, 1, \ldots, N_T - 1$:
+\begin{enumerate}
+  \item Set $u_{\text{col}} = (u[:,n] + u[:,n+1]) / 2$.
+  \item Evaluate $r = r(T_{n+1/2})$, $q = q(T_{n+1/2})$.
+  \item Compute $\ell_i, d_i, h_i$ for $i = 1, \ldots, N_K-1$:
+    \[
+      \alpha_i = \frac{(u_\text{col})_i K_i^2}{2\dK^2},\quad
+      \beta_i  = \frac{(r-q)K_i}{2\dK},\quad
+      \ell_i = \alpha_i+\beta_i,\quad
+      d_i = -2\alpha_i - q,\quad
+      h_i = \alpha_i - \beta_i.
+    \]
+  \item Assemble $A$ (banded) and apply $B$ to $C_\text{int}^n$:
+    \[
+      \text{rhs} = B^n C_\text{int}^n + b^n,
+    \]
+    where $b^n$ contains the boundary corrections~\eqref{eq:bcorrect}.
+  \item Solve $A^n C_\text{int}^{n+1} = \text{rhs}$ (banded Thomas).
+\end{enumerate}
+
+\textbf{Output:} $C \in \R^{(N_K+1)\times(N_T+1)}$.
+
+\subsection{Backward (adjoint) sweep}
+
+\textbf{Input:} $u$, $C$, $z$, $w$, grid.
+
+\textbf{Compute source:}
+$s_{i,n} = \dK\,\dT\,w_{i,n}\,(C_i^n - z_i^n)$ (zero if $w$ or $C-z$ is NaN/zero).
+
+\textbf{Terminal step} ($k = N_T$):
+Solve $(A^{N_T-1})^\top p^{N_T} = -s_\text{int}^{N_T}$.
+
+\textbf{For} $k = N_T - 1, N_T - 2, \ldots, 1$:
+\begin{enumerate}
+  \item Compute $(B^k)^\top p^{k+1}$ using~\eqref{eq:BT_mult}.
+  \item Assemble $\text{rhs} = (B^k)^\top p^{k+1} - s_\text{int}^k$.
+  \item Solve $(A^{k-1})^\top p^k = \text{rhs}$.
+\end{enumerate}
+
+\textbf{Output:} $p \in \R^{(N_K+1)\times(N_T+1)}$ (boundaries always zero).
+
+\subsection{Gradient assembly}
+
+\textbf{For} $n = 0, 1, \ldots, N_T - 1$:
+\begin{enumerate}
+  \item For $i = 1, \ldots, N_K - 1$: let $a_i = K_i^2/(2\dK^2)$.
+  \item Compute $\delta^2_i C^n = C_{i-1}^n - 2C_i^n + C_{i+1}^n$
+    and similarly for $C^{n+1}$.
+  \item Set
+    \[
+      \text{contrib}_i =
+        p_{i}^{n+1}
+        \Bigl[-(1-\theta)\,\dT\,a_i\,\delta^2_i C^n
+              + \theta\,\dT\,a_i\,\delta^2_i C^{n+1}
+        \Bigr]
+    \]
+    (interior index $i$ corresponds to global index $i+1$; all indices here
+    are in the global sense for clarity).
+  \item Accumulate: $\partial_u \mathcal{M}_h[\cdot, n] \mathrel{+}= \tfrac{1}{2}\,\text{contrib}$;
+    $\partial_u \mathcal{M}_h[\cdot, n+1] \mathrel{+}= \tfrac{1}{2}\,\text{contrib}$.
+\end{enumerate}
+
+Add Tikhonov gradient~\eqref{eq:grad_R} and zero the boundary columns.
+
+\textbf{Output:} $\nabla_u J_h \in \R^{(N_K+1)\times(N_T+1)}$.
+
+% =============================================================================
+\section{Market Data Preprocessing}
+% =============================================================================
+
+\subsection{From implied volatility to call prices}
+
+Market data is typically quoted as implied volatility $\hat{\sigma}_\text{BS}(K,T)$.
+We convert to call prices using the Black-Scholes formula:
+\begin{equation}\label{eq:bs}
+  z(K,T)
+  = S_0\,e^{-qT}\,\Phi(d_1)
+    - K\,e^{-rT}\,\Phi(d_2),
+\end{equation}
+where
+\[
+  d_{1,2} = \frac{\ln(S_0/K) + (r - q \pm \hat{\sigma}_\text{BS}^2/2)\,T}
+                 {\hat{\sigma}_\text{BS}\,\sqrt{T}}.
+\]
+
+\subsection{Vega-based weights}
+
+Raw call price errors mix the effect of pricing errors for different moneyness
+levels inequitably. To approximately normalize to implied vol units, we use
+inverse-vega-squared weights:
+\begin{equation}\label{eq:vega_weights}
+  w(K,T) = \frac{1}{\max(\mathcal{V}(K,T),\, \varepsilon_v)^2},
+\end{equation}
+where $\mathcal{V}(K,T) = S_0\,e^{-qT}\,\phi(d_1)\,\sqrt{T}$ is the
+Black-Scholes vega and $\varepsilon_v = 10^{-4}$ is a floor.
+With these weights, the misfit $\mathcal{M}_h(u)$ is approximately equal to
+\[
+  \mathcal{M}_h(u)
+  \approx
+  \frac{1}{2}\int_\Omg (\sigma_\text{BS,model}(K,T) - \hat{\sigma}_\text{BS}(K,T))^2 \,dK\,dT,
+\]
+i.e.\ an integrated squared IV error.
+
+% =============================================================================
+\section{Validation on Synthetic Data}
+% =============================================================================
+
+\subsection{Flat volatility test}
+
+The simplest validation: set $\sigma_\text{true} \equiv 0.20$ (constant),
+generate $z = \Fop(u_\text{true})$, and calibrate starting from $\sigma_0 = 0.22$.
+In the limit $\alpha \to 0$, the optimizer should recover $\sigma \approx 0.20$
+exactly (up to discretization error).
+
+On a $60 \times 40$ grid ($K \in [70,140]$, $T \in [0,1]$):
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Metric & Value \\
+\midrule
+Price RMSE (interior, $C > \$0.05$) & $1.4 \times 10^{-4}$ (rel.) \\
+Local vol recovery mean error & $3.1 \times 10^{-3}$ \\
+Local vol recovery max error & $2.1 \times 10^{-2}$ \\
+Optimizer iterations & 300 \\
+Wall time & $\approx 10$ s \\
+\bottomrule
+\end{tabular}
+\end{center}
+The residual local vol error is primarily a regularization bias (the Tikhonov
+term prevents perfect recovery for $\alpha > 0$) and a boundary layer artifact
+near $K_{\min}$.
+
+\subsection{Smile volatility test}
+
+A quadratic smile:
+$\sigma_\text{true}(K,T) = 0.20 + 0.05(\ln K/S_0)^2 - 0.02(T-0.5)$.
+Starting from a flat $\sigma_0 = 0.21$:
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Metric & Value \\
+\midrule
+Price RMSE (interior, $C > \$0.05$) & $4.9 \times 10^{-5}$ (rel.) \\
+Optimizer iterations & 300 \\
+Wall time & $\approx 10$ s \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\section{Boundary Layer Discussion}
+% =============================================================================
+
+Near $K = K_{\min}$, the call price is deep in the money and is dominated by
+the boundary condition~\eqref{eq:bc_left}. As a result:
+\begin{itemize}
+  \item The second difference $\delta^2_K C \approx 0$ near $K_{\min}$,
+    so the gradient contribution from the PDE misfit is negligible.
+  \item The regularization term dominates and pulls $u$ toward $u^*$ in
+    this region.
+  \item Calibration accuracy near $K_{\min}$ is limited by the quality of
+    the prior $u^*$ and the choice of $\alpha$.
+\end{itemize}
+This is a fundamental limitation of the Dupire forward PDE formulation:
+deep ITM options carry very little information about the local volatility.
+In practice, one may set $K_{\min}$ to the lowest available market strike
+to mitigate this effect.
+
+% =============================================================================
+\section{Software Architecture}
+% =============================================================================
+
+\subsection{Module overview}
+
+The implementation follows a layered design:
+
+\begin{center}
+\begin{tabular}{p{3.5cm}p{9.5cm}}
+\toprule
+Module & Responsibility \\
+\midrule
+\texttt{grid.py} & Uniform $(K,T)$ grid, boundary conditions, rate curves \\
+\texttt{utils.py} & Black-Scholes pricing (call, put, vega, IV inversion) \\
+\texttt{state\_solver.py} & Forward Dupire PDE solve (theta-scheme, banded) \\
+\texttt{adjoint\_solver.py} & Backward adjoint sweep $(A^\top p = \text{rhs})$ \\
+\texttt{gradient.py} & PDE gradient assembly + Tikhonov gradient \\
+\texttt{objective.py} & Objective value $J_h$ \\
+\texttt{regularization.py} & Tikhonov value and gradient \\
+\texttt{market\_data.py} & IV-to-call conversion, vega weights, JSON loader \\
+\texttt{calibration.py} & L-BFGS-B driver, result container \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Data flow}
+
+\begin{center}
+\texttt{u} $\xrightarrow{\texttt{solve\_state}}$
+\texttt{C} $\xrightarrow{\texttt{evaluate\_J}}$
+$J$ \\[4pt]
+\texttt{u, C, z, w} $\xrightarrow{\texttt{solve\_adjoint}}$
+\texttt{p} $\xrightarrow{\texttt{evaluate\_gradient}}$
+$\nabla_u J$
+\end{center}
+
+\subsection{Key implementation details}
+
+\begin{enumerate}
+  \item \textbf{Crank-Nicolson} ($\theta = 0.5$) gives second-order
+    accuracy in $T$ with unconditional stability.
+  \item \textbf{Averaged local variance} $u_\text{col}^n = (u^n + u^{n+1})/2$
+    is used in each time step, which is consistent with the $\theta$-scheme
+    discretization and ensures symmetry of the gradient formula.
+  \item \textbf{Banded solver}: all tridiagonal systems are solved with
+    \texttt{scipy.linalg.solve\_banded((1,1), ab, b)} in $\mathcal{O}(N_K)$
+    operations.
+  \item \textbf{Exact gradient}: the DtO approach guarantees the adjoint
+    computes the exact gradient of $J_h$, verified by the Taylor test to
+    machine precision.
+  \item \textbf{Box constraints}: L-BFGS-B enforces $u \in [\sigma_{\min}^2,\,\sigma_{\max}^2]$
+    to prevent negative or extreme local variances.
+\end{enumerate}
+
+% =============================================================================
+\appendix
+% =============================================================================
+\section{Derivation of the Adjoint Equation via Differentiation of the Lagrangian}
+\label{app:adjoint_derivation}
+
+We give a self-contained derivation of equations~\eqref{eq:adj_terminal}--\eqref{eq:adj_internal}.
+
+The discrete Lagrangian~\eqref{eq:Lagrangian} is
+\[
+  \mathcal{L} = J_h(C) + \sum_{n=0}^{N_T-1}
+    (p^{n+1})^\top (A^n C_\text{int}^{n+1} - B^n C_\text{int}^n - b^n).
+\]
+
+\paragraph{Case $k = N_T$.}
+$C_\text{int}^{N_T}$ appears only in the last term ($n = N_T - 1$) with
+coefficient $(A^{N_T-1})^\top p^{N_T}$, and in $J_h$ with derivative
+$\nabla_{C^{N_T}} J_h$. Setting
+$\partial \mathcal{L} / \partial C_\text{int}^{N_T} = 0$ gives
+\[
+  (A^{N_T-1})^\top p^{N_T} + \nabla_{C^{N_T}} J_h = 0
+  \quad\Rightarrow\quad
+  (A^{N_T-1})^\top p^{N_T} = -\nabla_{C^{N_T}} J_h.
+\]
+
+\paragraph{Case $1 \leq k \leq N_T - 1$.}
+$C_\text{int}^k$ appears in:
+\begin{itemize}
+  \item Step $n = k-1$ (as the ``future'' state): coefficient
+    $(A^{k-1})^\top p^k$.
+  \item Step $n = k$ (as the ``current'' state): coefficient
+    $-(B^k)^\top p^{k+1}$.
+  \item $J_h$: derivative $\nabla_{C^k} J_h$.
+\end{itemize}
+Setting $\partial \mathcal{L} / \partial C_\text{int}^k = 0$:
+\[
+  (A^{k-1})^\top p^k - (B^k)^\top p^{k+1} + \nabla_{C^k} J_h = 0
+  \quad\Rightarrow\quad
+  (A^{k-1})^\top p^k = (B^k)^\top p^{k+1} - \nabla_{C^k} J_h.
+\]
+
+\paragraph{Case $k = 0$.}
+$C_\text{int}^0$ is fixed by the initial condition and is not an
+optimization variable, so we do not differentiate with respect to it.
+This is why the sweep stops at $k = 1$.
+
+\section{Derivation of the Gradient Formula}
+\label{app:gradient_derivation}
+
+We derive equation~\eqref{eq:grad_ucol} from the stationarity of
+$\mathcal{L}$ with respect to $u_\text{col,i}^n$.
+
+The Lagrangian has dependence on $u_\text{col,i}^n$ only through
+$A^n$ and $B^n$ in the term
+\[
+  (p^{n+1})^\top (A^n C_\text{int}^{n+1} - B^n C_\text{int}^n - b^n).
+\]
+Differentiating:
+\[
+  \pder{\mathcal{L}}{u_{\text{col},i}^n}
+  = (p^{n+1})^\top
+    \Bigl(
+      \pder{A^n}{u_{\text{col},i}^n} C_\text{int}^{n+1}
+      - \pder{B^n}{u_{\text{col},i}^n} C_\text{int}^n
+      - \pder{b^n}{u_{\text{col},i}^n}
+    \Bigr).
+\]
+From~\eqref{eq:AB}:
+$\partial A^n/\partial u = -\theta\dT\,\partial L/\partial u$ and
+$\partial B^n/\partial u = +(1-\theta)\dT\,\partial L/\partial u$.
+
+Only row $j = i-1$ of $\partial L/\partial u_{\text{col},i}$ is nonzero,
+with entries
+\[
+  \bigl[\pder{L}{u_{\text{col},i}}\bigr]_{j,j-1} = a_i,
+  \quad
+  \bigl[\pder{L}{u_{\text{col},i}}\bigr]_{j,j}   = -2a_i,
+  \quad
+  \bigl[\pder{L}{u_{\text{col},i}}\bigr]_{j,j+1} = a_i.
+\]
+Therefore
+\[
+  \Bigl[\pder{L}{u_{\text{col},i}} C\Bigr]_{j=i-1}
+  = a_i (C_{i-1} - 2C_i + C_{i+1}) = a_i\,\delta^2_i C.
+\]
+
+Regarding the boundary correction $b^n$: for $i \neq 1$ and $i \neq N_K-1$,
+$\partial b^n / \partial u_{\text{col},i}^n = 0$. For $i=1$:
+$\ell_1 = \alpha_1 + \beta_1$ depends on $u_{\text{col},1}$, so
+$b^n_1 = \theta\dT\,\ell_1 C_0^{n+1} + (1-\theta)\dT\,\ell_1 C_0^n$
+contributes a term $a_1\,(\theta C_0^{n+1} + (1-\theta) C_0^n)\,\dT$
+to the gradient of $b^n_1$ w.r.t.\ $u_{\text{col},1}$. However, near
+$K = K_{\min}$ the call is deep ITM and $\delta^2_1 C \approx 0$;
+numerically this boundary term contributes at the same order as the
+interior term and is automatically captured through the second-difference
+formula when the boundary values are treated as part of the global
+$\delta^2 C$ computation at $i=1$.
+
+Collecting all terms and using the chain rule
+$u_i^n \to u_{\text{col},i}^n$ with factor $\tfrac{1}{2}$:
+\[
+  \nabla_u \mathcal{M}_h \big|_{i,n}
+  = \tfrac{1}{2}\,p_{i}^{n+1}\,\dT\,a_i
+    \bigl[-(1-\theta)\,\delta^2_i C^n + \theta\,\delta^2_i C^{n+1}\bigr]
+  \quad (\text{from step } n \to n+1),
+\]
+and an analogous contribution from step $n-1 \to n$ (factor
+$\tfrac{1}{2}\,p_i^n$). Note: throughout this appendix the index $i$ of $p$
+refers to the interior-system index (row $j = i-1$ in 0-based notation).
+
+\section{Discretization Error Analysis}
+\label{app:error}
+
+\paragraph{Spatial truncation error.}
+The centered second difference $\delta^2_i C / \dK^2$ approximates
+$\partial^2 C / \partial K^2$ with error $\mathcal{O}(\dK^2)$. The
+centered first difference for the convection term likewise has error
+$\mathcal{O}(\dK^2)$. Hence the spatial scheme is second-order accurate.
+
+\paragraph{Temporal truncation error.}
+The Crank-Nicolson scheme ($\theta = \tfrac{1}{2}$) has temporal truncation
+error $\mathcal{O}(\dT^2)$. Backward Euler ($\theta = 1$) has error
+$\mathcal{O}(\dT)$ but is unconditionally stable and dissipative, which can
+be useful when the coefficient $u$ is far from smooth.
+
+\paragraph{Overall convergence.}
+Under standard regularity assumptions on $u$ and $C$, the full
+scheme converges at rate $\mathcal{O}(\dK^2 + \dT^2)$ for $\theta = \tfrac{1}{2}$.
+
+\paragraph{Stability.}
+The Crank-Nicolson scheme is unconditionally stable for the diffusion part
+(the $\alpha_i$ terms) but may exhibit spurious oscillations for
+convection-dominated problems (large $|\beta_i / \alpha_i|$). For typical
+equity option parameters ($r, q \ll \sigma$) this is not an issue; for
+extreme rates or very small volatilities, upwinding or a larger $\theta$ may
+be needed.
+
+\end{document}

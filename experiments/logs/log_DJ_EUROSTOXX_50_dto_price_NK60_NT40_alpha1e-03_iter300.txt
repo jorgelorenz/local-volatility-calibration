@@ -1,0 +1,76 @@
+======================================================================
+  Experiment log  --  2026-04-22 08:00:23
+======================================================================
+
+  Parameters
+  ----------
+    Method          : dto-price
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 60
+    N_T (calib)     : 40
+    alpha           : 1.00e-03
+    max_iter        : 300
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : 2.534694e+01
+    grad_norm       : 1.855287e+01
+    n_iter          : 147
+    n_fevals        : 187
+    success         : True
+    message         : CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+    elapsed_calib   : 41.32 s
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+    rec    1  J=6.264414e+01  dJ=     ---  grad=3.152e+02  t_iter=0.45s  t_cumul=0.5s
+    rec    2  J=5.545059e+01  dJ=7.194e+00  grad=2.978e+02  t_iter=0.21s  t_cumul=1.6s
+    rec    3  J=3.195729e+01  dJ=2.349e+01  grad=1.553e+02  t_iter=0.44s  t_cumul=3.8s
+    rec    4  J=3.112115e+01  dJ=8.361e-01  grad=9.136e+01  t_iter=0.20s  t_cumul=4.8s
+    rec    5  J=2.967060e+01  dJ=1.451e+00  grad=6.346e+01  t_iter=0.22s  t_cumul=6.2s
+    rec    6  J=2.926676e+01  dJ=4.038e-01  grad=2.512e+01  t_iter=0.22s  t_cumul=7.4s
+    rec    7  J=2.886013e+01  dJ=4.066e-01  grad=3.739e+01  t_iter=0.23s  t_cumul=8.8s
+    rec    8  J=2.852942e+01  dJ=3.307e-01  grad=1.635e+01  t_iter=0.22s  t_cumul=10.3s
+    rec    9  J=2.831226e+01  dJ=2.172e-01  grad=1.065e+01  t_iter=0.21s  t_cumul=11.4s
+    rec   10  J=2.784760e+01  dJ=4.647e-01  grad=9.556e+00  t_iter=0.41s  t_cumul=13.6s
+    rec   11  J=2.753185e+01  dJ=3.158e-01  grad=1.278e+01  t_iter=0.22s  t_cumul=15.3s
+    rec   12  J=2.735709e+01  dJ=1.748e-01  grad=2.077e+01  t_iter=0.26s  t_cumul=16.5s
+    rec   13  J=2.721440e+01  dJ=1.427e-01  grad=3.453e+01  t_iter=0.21s  t_cumul=18.0s
+    rec   14  J=2.684079e+01  dJ=3.736e-01  grad=4.563e+01  t_iter=0.23s  t_cumul=19.2s
+    rec   15  J=2.646863e+01  dJ=3.722e-01  grad=2.251e+01  t_iter=0.20s  t_cumul=20.3s
+    rec   16  J=2.602659e+01  dJ=4.420e-01  grad=6.313e+01  t_iter=0.44s  t_cumul=22.0s
+    rec   17  J=2.586966e+01  dJ=1.569e-01  grad=2.190e+01  t_iter=0.25s  t_cumul=23.4s
+    rec   18  J=2.575401e+01  dJ=1.157e-01  grad=1.748e+01  t_iter=0.20s  t_cumul=24.6s
+    rec   19  J=2.569741e+01  dJ=5.660e-02  grad=1.957e+01  t_iter=0.21s  t_cumul=26.1s
+    rec   20  J=2.563558e+01  dJ=6.183e-02  grad=1.446e+01  t_iter=0.24s  t_cumul=27.7s
+    rec   21  J=2.561119e+01  dJ=2.439e-02  grad=1.109e+01  t_iter=0.21s  t_cumul=28.9s
+    rec   22  J=2.554665e+01  dJ=6.454e-02  grad=2.508e+01  t_iter=0.44s  t_cumul=30.5s
+    rec   23  J=2.551562e+01  dJ=3.103e-02  grad=4.770e+00  t_iter=0.20s  t_cumul=31.5s
+    rec   24  J=2.547674e+01  dJ=3.888e-02  grad=5.637e+00  t_iter=0.21s  t_cumul=32.6s
+    rec   25  J=2.544527e+01  dJ=3.147e-02  grad=3.521e+00  t_iter=0.22s  t_cumul=33.7s
+    rec   26  J=2.542407e+01  dJ=2.120e-02  grad=2.394e+01  t_iter=0.21s  t_cumul=35.0s
+    rec   27  J=2.540379e+01  dJ=2.028e-02  grad=2.078e+01  t_iter=0.22s  t_cumul=36.3s
+    rec   28  J=2.536949e+01  dJ=3.430e-02  grad=1.390e+01  t_iter=0.42s  t_cumul=37.8s
+    rec   29  J=2.536297e+01  dJ=6.528e-03  grad=2.522e+00  t_iter=0.22s  t_cumul=39.1s
+    rec   30  J=2.534695e+01  dJ=1.602e-02  grad=1.748e+01  t_iter=0.43s  t_cumul=40.4s
+
+  Sub-step timings (mean over recorded steps)
+  -------------------------------------------
+    t_forward           : mean=0.209s  max=0.241s
+    t_adjoint           : mean=0.007s  max=0.015s
+    t_gradient          : mean=0.001s  max=0.003s
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 300
+    Fine N_T        : 200
+    elapsed_valid   : 5.20 s
+    IV MAE          : 0.015869
+    IV RMSE         : 0.019836
+    IV max error    : 0.053455
+    n valid points  : 74
+
+======================================================================

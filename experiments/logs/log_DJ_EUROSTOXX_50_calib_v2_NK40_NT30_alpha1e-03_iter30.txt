@@ -1,0 +1,41 @@
+======================================================================
+  Experiment log  --  2026-04-22 20:23:20
+======================================================================
+
+  Parameters
+  ----------
+    Method          : calib-v2
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 40
+    N_T (calib)     : 30
+    alpha           : 1.00e-03
+    max_iter        : 30
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : nan
+    grad_norm       : nan
+    n_iter          : 30
+    n_fevals        : 30
+    success         : True
+    message         : calibrate_v2
+    converged       : True
+    elapsed_calib   : 244.14 s
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 80
+    Fine N_T        : 60
+    elapsed_valid   : 15.51 s
+    IV MAE          : 0.010467
+    IV RMSE         : 0.014724
+    IV max error    : 0.054619
+    n valid points  : 76
+
+======================================================================

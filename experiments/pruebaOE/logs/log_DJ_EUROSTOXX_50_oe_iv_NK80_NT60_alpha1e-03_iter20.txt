@@ -1,0 +1,50 @@
+======================================================================
+  Experiment log  --  2026-04-22 21:52:40
+======================================================================
+
+  Parameters
+  ----------
+    Method          : oe-iv
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 80
+    N_T (calib)     : 60
+    alpha           : 1.00e-03
+    max_iter        : 20
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : 1.537858e+01
+    grad_norm       : 3.445914e+05
+    n_iter          : 20
+    converged       : False
+    elapsed_calib   : 405.66 s
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+    rec    1  J=2.699000e+01  dJ=     ---  grad=1.286e+01  t_iter=8.58s  t_cumul=8.6s
+    rec    2  J=2.061823e+01  dJ=1.079e+00  grad=1.382e+01  t_iter=7.96s  t_cumul=41.3s
+    rec    3  J=1.752115e+01  dJ=1.137e-02  grad=5.181e+01  t_iter=9.91s  t_cumul=112.4s
+    rec    4  J=1.520603e+01  dJ=8.994e-04  grad=5.843e+01  t_iter=27.84s  t_cumul=234.5s
+    rec    5  J=1.520541e+01  dJ=3.351e-06  grad=5.796e+01  t_iter=38.73s  t_cumul=405.7s
+
+  Sub-step timings (mean over recorded steps)
+  -------------------------------------------
+    t_forward           : mean=0.489s  max=0.561s
+    t_adjoint           : mean=0.743s  max=0.768s
+    t_gradient          : mean=0.001s  max=0.001s
+    t_oe_solve          : mean=16.633s  max=36.723s
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 300
+    Fine N_T        : 200
+    elapsed_valid   : 5.47 s
+    IV MAE          : 0.020864
+    IV RMSE         : 0.028171
+    IV max error    : 0.112352
+    n valid points  : 75
+
+======================================================================

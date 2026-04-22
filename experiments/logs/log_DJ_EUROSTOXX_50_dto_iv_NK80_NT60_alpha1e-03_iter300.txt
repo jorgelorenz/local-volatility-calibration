@@ -1,0 +1,53 @@
+======================================================================
+  Experiment log  --  2026-04-22 08:46:18
+======================================================================
+
+  Parameters
+  ----------
+    Method          : dto-iv
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 80
+    N_T (calib)     : 60
+    alpha           : 1.00e-03
+    max_iter        : 300
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : 1.452351e+01
+    grad_norm       : 7.744049e+00
+    n_iter          : 34
+    n_fevals        : 218
+    success         : True
+    message         : CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+    elapsed_calib   : 429.13 s
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+    rec    1  J=2.571819e+01  dJ=     ---  grad=5.028e+00  t_iter=11.72s  t_cumul=11.7s
+    rec    2  J=2.026403e+01  dJ=5.454e+00  grad=2.458e+01  t_iter=1.93s  t_cumul=21.5s
+    rec    3  J=1.655344e+01  dJ=3.711e+00  grad=1.130e+02  t_iter=7.81s  t_cumul=37.6s
+    rec    4  J=1.543035e+01  dJ=1.123e+00  grad=1.319e+01  t_iter=3.83s  t_cumul=59.1s
+    rec    5  J=1.494441e+01  dJ=4.859e-01  grad=3.440e+01  t_iter=1.92s  t_cumul=85.4s
+    rec    6  J=1.469772e+01  dJ=2.467e-01  grad=8.768e+00  t_iter=45.45s  t_cumul=254.9s
+    rec    7  J=1.455509e+01  dJ=1.426e-01  grad=8.700e+00  t_iter=7.72s  t_cumul=330.0s
+
+  Sub-step timings (mean over recorded steps)
+  -------------------------------------------
+    t_forward           : mean=0.465s  max=0.522s
+    t_adjoint           : mean=0.750s  max=0.788s
+    t_gradient          : mean=0.001s  max=0.001s
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 300
+    Fine N_T        : 200
+    elapsed_valid   : 5.32 s
+    IV MAE          : 0.017051
+    IV RMSE         : 0.021442
+    IV max error    : 0.052166
+    n valid points  : 74
+
+======================================================================

@@ -1,0 +1,56 @@
+======================================================================
+  Experiment log  --  2026-04-22 20:25:48
+======================================================================
+
+  Parameters
+  ----------
+    Method          : oe-price
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 40
+    N_T (calib)     : 30
+    alpha           : 1.00e-03
+    max_iter        : 50
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : 6.004064e+02
+    grad_norm       : 1.413499e+04
+    n_iter          : 50
+    converged       : False
+    elapsed_calib   : 13.31 s
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+    rec    1  J=6.857985e+01  dJ=     ---  grad=1.705e+01  t_iter=0.35s  t_cumul=0.4s
+    rec    2  J=9.001609e+01  dJ=1.506e+01  grad=5.087e+02  t_iter=0.28s  t_cumul=1.4s
+    rec    3  J=2.120068e+02  dJ=5.734e+01  grad=3.925e+03  t_iter=0.28s  t_cumul=2.7s
+    rec    4  J=1.459566e+02  dJ=4.720e+01  grad=1.176e+03  t_iter=0.24s  t_cumul=4.1s
+    rec    5  J=8.866116e+01  dJ=6.309e+02  grad=8.422e+02  t_iter=0.23s  t_cumul=5.5s
+    rec    6  J=6.606210e+02  dJ=1.651e+01  grad=1.963e+04  t_iter=0.26s  t_cumul=6.7s
+    rec    7  J=5.983998e+02  dJ=1.411e+01  grad=1.713e+04  t_iter=0.23s  t_cumul=8.0s
+    rec    8  J=1.440520e+03  dJ=6.664e+02  grad=3.551e+04  t_iter=0.29s  t_cumul=9.3s
+    rec    9  J=5.236535e+02  dJ=3.494e+02  grad=1.333e+04  t_iter=0.28s  t_cumul=10.7s
+    rec   10  J=6.251033e+02  dJ=8.121e+01  grad=1.517e+04  t_iter=0.23s  t_cumul=11.9s
+    rec   11  J=7.039756e+02  dJ=9.584e+01  grad=1.751e+04  t_iter=0.27s  t_cumul=13.3s
+
+  Sub-step timings (mean over recorded steps)
+  -------------------------------------------
+    t_forward           : mean=0.247s  max=0.273s
+    t_adjoint           : mean=0.010s  max=0.019s
+    t_gradient          : mean=0.001s  max=0.002s
+    t_oe_solve          : mean=0.009s  max=0.094s
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 300
+    Fine N_T        : 200
+    elapsed_valid   : 10.62 s
+    IV MAE          : 0.139773
+    IV RMSE         : 0.223807
+    IV max error    : 0.857369
+    n valid points  : 61
+
+======================================================================

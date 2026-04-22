@@ -1,0 +1,52 @@
+======================================================================
+  Experiment log  --  2026-04-22 07:24:43
+======================================================================
+
+  Parameters
+  ----------
+    Method          : oe-iv
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 40
+    N_T (calib)     : 30
+    alpha           : 1.00e-03
+    max_iter        : 30
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : 2.023266e+02
+    grad_norm       : 9.930595e+03
+    n_iter          : 30
+    converged       : False
+    elapsed_calib   : 23.98 s
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+    rec    1  J=2.797788e+01  dJ=     ---  grad=2.680e+01  t_iter=0.94s  t_cumul=0.9s
+    rec    2  J=1.117106e+02  dJ=1.631e+01  grad=1.433e+04  t_iter=0.82s  t_cumul=4.8s
+    rec    3  J=4.530087e+02  dJ=3.644e+02  grad=2.084e+03  t_iter=0.79s  t_cumul=8.8s
+    rec    4  J=1.565716e+02  dJ=6.957e+01  grad=2.263e+04  t_iter=0.81s  t_cumul=12.8s
+    rec    5  J=4.910451e+02  dJ=2.236e+02  grad=1.353e+03  t_iter=0.76s  t_cumul=16.3s
+    rec    6  J=6.261466e+02  dJ=6.087e+02  grad=3.999e+03  t_iter=0.77s  t_cumul=20.1s
+    rec    7  J=1.248142e+03  dJ=1.102e+03  grad=4.227e+02  t_iter=0.79s  t_cumul=24.0s
+
+  Sub-step timings (mean over recorded steps)
+  -------------------------------------------
+    t_forward           : mean=0.221s  max=0.231s
+    t_adjoint           : mean=0.299s  max=0.383s
+    t_gradient          : mean=0.001s  max=0.001s
+    t_oe_solve          : mean=0.002s  max=0.012s
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 80
+    Fine N_T        : 60
+    elapsed_valid   : 0.84 s
+    IV MAE          : 0.084372
+    IV RMSE         : 0.102337
+    IV max error    : 0.188654
+    n valid points  : 37
+
+======================================================================

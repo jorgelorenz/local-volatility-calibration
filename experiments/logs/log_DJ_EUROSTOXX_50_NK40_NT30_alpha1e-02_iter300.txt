@@ -1,0 +1,100 @@
+======================================================================
+  Experiment log  —  2026-04-21 23:30:37
+======================================================================
+
+  Parameters
+  ----------
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 40
+    N_T (calib)     : 30
+    alpha           : 1.00e-02
+    max_iter        : 300
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : 2.694179e+01
+    grad_norm       : 4.636289e-01
+    n_iter          : 300
+    n_fevals        : 341
+    elapsed_calib   : 47.17 s
+    success         : False
+    message         : STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+    rec    1  J=5.059629e+01  ΔJ=     ---  ‖∇J‖∞=5.103e+01  t_iter=0.71s  t_cumul=0.7s
+    rec    2  J=3.414548e+01  ΔJ=1.645e+01  ‖∇J‖∞=3.362e+00  t_iter=0.14s  t_cumul=1.4s
+    rec    3  J=3.161797e+01  ΔJ=2.528e+00  ‖∇J‖∞=7.406e+00  t_iter=0.13s  t_cumul=2.2s
+    rec    4  J=3.076972e+01  ΔJ=8.483e-01  ‖∇J‖∞=1.997e+01  t_iter=0.25s  t_cumul=3.0s
+    rec    5  J=3.026450e+01  ΔJ=5.052e-01  ‖∇J‖∞=1.787e+01  t_iter=0.21s  t_cumul=4.2s
+    rec    6  J=3.014472e+01  ΔJ=1.198e-01  ‖∇J‖∞=7.725e+00  t_iter=0.14s  t_cumul=5.0s
+    rec    7  J=2.988403e+01  ΔJ=2.607e-01  ‖∇J‖∞=2.182e+01  t_iter=0.13s  t_cumul=5.7s
+    rec    8  J=2.959500e+01  ΔJ=2.890e-01  ‖∇J‖∞=2.444e+01  t_iter=0.26s  t_cumul=6.5s
+    rec    9  J=2.935070e+01  ΔJ=2.443e-01  ‖∇J‖∞=1.076e+01  t_iter=0.14s  t_cumul=7.1s
+    rec   10  J=2.925698e+01  ΔJ=9.373e-02  ‖∇J‖∞=1.043e+01  t_iter=0.27s  t_cumul=8.2s
+    rec   11  J=2.923156e+01  ΔJ=2.542e-02  ‖∇J‖∞=2.871e+00  t_iter=0.13s  t_cumul=9.0s
+    rec   12  J=2.917209e+01  ΔJ=5.947e-02  ‖∇J‖∞=1.627e+01  t_iter=0.39s  t_cumul=10.1s
+    rec   13  J=2.907772e+01  ΔJ=9.437e-02  ‖∇J‖∞=4.969e+00  t_iter=0.16s  t_cumul=11.0s
+    rec   14  J=2.900115e+01  ΔJ=7.657e-02  ‖∇J‖∞=1.955e+01  t_iter=0.32s  t_cumul=12.2s
+    rec   15  J=2.895660e+01  ΔJ=4.455e-02  ‖∇J‖∞=8.344e+00  t_iter=0.13s  t_cumul=13.2s
+    rec   16  J=2.885301e+01  ΔJ=1.036e-01  ‖∇J‖∞=1.820e+01  t_iter=0.15s  t_cumul=14.2s
+    rec   17  J=2.875408e+01  ΔJ=9.893e-02  ‖∇J‖∞=7.453e+00  t_iter=0.12s  t_cumul=14.8s
+    rec   18  J=2.869827e+01  ΔJ=5.581e-02  ‖∇J‖∞=3.841e+00  t_iter=0.13s  t_cumul=15.5s
+    rec   19  J=2.863932e+01  ΔJ=5.895e-02  ‖∇J‖∞=3.907e+01  t_iter=0.14s  t_cumul=16.3s
+    rec   20  J=2.858405e+01  ΔJ=5.527e-02  ‖∇J‖∞=2.011e+01  t_iter=0.13s  t_cumul=17.2s
+    rec   21  J=2.852041e+01  ΔJ=6.364e-02  ‖∇J‖∞=1.504e+01  t_iter=0.13s  t_cumul=17.9s
+    rec   22  J=2.838384e+01  ΔJ=1.366e-01  ‖∇J‖∞=2.421e+01  t_iter=0.13s  t_cumul=18.7s
+    rec   23  J=2.831473e+01  ΔJ=6.911e-02  ‖∇J‖∞=9.599e+00  t_iter=0.13s  t_cumul=19.4s
+    rec   24  J=2.823766e+01  ΔJ=7.708e-02  ‖∇J‖∞=3.818e+00  t_iter=0.16s  t_cumul=20.2s
+    rec   25  J=2.819345e+01  ΔJ=4.421e-02  ‖∇J‖∞=5.257e+00  t_iter=0.14s  t_cumul=21.0s
+    rec   26  J=2.815546e+01  ΔJ=3.799e-02  ‖∇J‖∞=6.152e+00  t_iter=0.13s  t_cumul=21.6s
+    rec   27  J=2.810939e+01  ΔJ=4.607e-02  ‖∇J‖∞=8.756e+00  t_iter=0.14s  t_cumul=22.3s
+    rec   28  J=2.802074e+01  ΔJ=8.865e-02  ‖∇J‖∞=9.100e+00  t_iter=0.13s  t_cumul=23.0s
+    rec   29  J=2.797415e+01  ΔJ=4.659e-02  ‖∇J‖∞=7.941e+00  t_iter=0.14s  t_cumul=23.8s
+    rec   30  J=2.790132e+01  ΔJ=7.283e-02  ‖∇J‖∞=5.130e+00  t_iter=0.14s  t_cumul=24.4s
+    rec   31  J=2.786574e+01  ΔJ=3.558e-02  ‖∇J‖∞=2.805e+00  t_iter=0.14s  t_cumul=25.2s
+    rec   32  J=2.783518e+01  ΔJ=3.056e-02  ‖∇J‖∞=4.347e+00  t_iter=0.13s  t_cumul=26.0s
+    rec   33  J=2.781748e+01  ΔJ=1.771e-02  ‖∇J‖∞=7.325e+00  t_iter=0.13s  t_cumul=26.9s
+    rec   34  J=2.776048e+01  ΔJ=5.700e-02  ‖∇J‖∞=8.066e+00  t_iter=0.13s  t_cumul=27.6s
+    rec   35  J=2.766490e+01  ΔJ=9.558e-02  ‖∇J‖∞=7.550e+00  t_iter=0.13s  t_cumul=28.3s
+    rec   36  J=2.760772e+01  ΔJ=5.718e-02  ‖∇J‖∞=4.459e+00  t_iter=0.13s  t_cumul=28.9s
+    rec   37  J=2.757835e+01  ΔJ=2.936e-02  ‖∇J‖∞=2.719e+00  t_iter=0.13s  t_cumul=29.7s
+    rec   38  J=2.754372e+01  ΔJ=3.464e-02  ‖∇J‖∞=2.170e+00  t_iter=0.14s  t_cumul=30.5s
+    rec   39  J=2.751373e+01  ΔJ=2.999e-02  ‖∇J‖∞=4.574e+00  t_iter=0.13s  t_cumul=31.2s
+    rec   40  J=2.745110e+01  ΔJ=6.263e-02  ‖∇J‖∞=7.326e+00  t_iter=0.13s  t_cumul=31.9s
+    rec   41  J=2.740480e+01  ΔJ=4.630e-02  ‖∇J‖∞=8.369e+00  t_iter=0.13s  t_cumul=32.5s
+    rec   42  J=2.737771e+01  ΔJ=2.709e-02  ‖∇J‖∞=2.752e+00  t_iter=0.13s  t_cumul=33.2s
+    rec   43  J=2.734380e+01  ΔJ=3.391e-02  ‖∇J‖∞=3.999e+00  t_iter=0.13s  t_cumul=34.0s
+    rec   44  J=2.728994e+01  ΔJ=5.386e-02  ‖∇J‖∞=5.508e+00  t_iter=0.14s  t_cumul=34.8s
+    rec   45  J=2.727102e+01  ΔJ=1.892e-02  ‖∇J‖∞=7.369e+00  t_iter=0.14s  t_cumul=35.5s
+    rec   46  J=2.724221e+01  ΔJ=2.880e-02  ‖∇J‖∞=6.093e+00  t_iter=0.14s  t_cumul=36.1s
+    rec   47  J=2.720403e+01  ΔJ=3.819e-02  ‖∇J‖∞=2.527e+00  t_iter=0.13s  t_cumul=36.9s
+    rec   48  J=2.718106e+01  ΔJ=2.297e-02  ‖∇J‖∞=2.300e+00  t_iter=0.13s  t_cumul=37.6s
+    rec   49  J=2.715919e+01  ΔJ=2.187e-02  ‖∇J‖∞=1.041e+00  t_iter=0.13s  t_cumul=38.3s
+    rec   50  J=2.712932e+01  ΔJ=2.988e-02  ‖∇J‖∞=4.947e+00  t_iter=0.13s  t_cumul=39.0s
+    rec   51  J=2.710469e+01  ΔJ=2.463e-02  ‖∇J‖∞=6.108e+00  t_iter=0.27s  t_cumul=39.8s
+    rec   52  J=2.708984e+01  ΔJ=1.485e-02  ‖∇J‖∞=4.241e+00  t_iter=0.13s  t_cumul=40.5s
+    rec   53  J=2.705885e+01  ΔJ=3.099e-02  ‖∇J‖∞=4.851e+00  t_iter=0.13s  t_cumul=41.2s
+    rec   54  J=2.704188e+01  ΔJ=1.697e-02  ‖∇J‖∞=5.596e-01  t_iter=0.15s  t_cumul=41.9s
+    rec   55  J=2.700418e+01  ΔJ=3.770e-02  ‖∇J‖∞=2.463e+00  t_iter=0.13s  t_cumul=42.7s
+    rec   56  J=2.699452e+01  ΔJ=9.659e-03  ‖∇J‖∞=1.394e+00  t_iter=0.13s  t_cumul=43.5s
+    rec   57  J=2.697846e+01  ΔJ=1.606e-02  ‖∇J‖∞=1.056e+00  t_iter=0.15s  t_cumul=44.1s
+    rec   58  J=2.696410e+01  ΔJ=1.436e-02  ‖∇J‖∞=2.149e+00  t_iter=0.13s  t_cumul=45.1s
+    rec   59  J=2.695454e+01  ΔJ=9.553e-03  ‖∇J‖∞=1.380e+00  t_iter=0.13s  t_cumul=45.7s
+    rec   60  J=2.694835e+01  ΔJ=6.197e-03  ‖∇J‖∞=1.288e+00  t_iter=0.13s  t_cumul=46.4s
+    rec   61  J=2.694179e+01  ΔJ=6.556e-03  ‖∇J‖∞=4.636e-01  t_iter=0.17s  t_cumul=47.2s
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 300
+    Fine N_T        : 200
+    elapsed_valid   : 5.98 s
+    IV MAE          : 0.012631
+    IV RMSE         : 0.016189
+    IV max error    : 0.053348
+    n valid points  : 74
+
+======================================================================

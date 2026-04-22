@@ -1,0 +1,79 @@
+======================================================================
+  Experiment log  --  2026-04-22 07:47:59
+======================================================================
+
+  Parameters
+  ----------
+    Method          : dto-price
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 60
+    N_T (calib)     : 40
+    alpha           : 1.00e-04
+    max_iter        : 300
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : 2.556716e+01
+    grad_norm       : 2.269989e+01
+    n_iter          : 162
+    n_fevals        : 195
+    success         : True
+    message         : CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+    elapsed_calib   : 44.84 s
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+    rec    1  J=4.500861e+01  dJ=     ---  grad=3.152e+02  t_iter=0.51s  t_cumul=0.5s
+    rec    2  J=4.063153e+01  dJ=4.377e+00  grad=3.137e+02  t_iter=0.22s  t_cumul=1.9s
+    rec    3  J=3.063752e+01  dJ=9.994e+00  grad=1.148e+02  t_iter=1.30s  t_cumul=4.1s
+    rec    4  J=2.975534e+01  dJ=8.822e-01  grad=1.620e+01  t_iter=0.22s  t_cumul=6.2s
+    rec    5  J=2.918681e+01  dJ=5.685e-01  grad=1.558e+01  t_iter=0.43s  t_cumul=7.7s
+    rec    6  J=2.872118e+01  dJ=4.656e-01  grad=1.509e+01  t_iter=0.43s  t_cumul=9.8s
+    rec    7  J=2.837820e+01  dJ=3.430e-01  grad=2.781e+01  t_iter=0.22s  t_cumul=11.1s
+    rec    8  J=2.797998e+01  dJ=3.982e-01  grad=5.474e+00  t_iter=0.22s  t_cumul=12.2s
+    rec    9  J=2.766058e+01  dJ=3.194e-01  grad=4.373e+01  t_iter=0.24s  t_cumul=13.6s
+    rec   10  J=2.722354e+01  dJ=4.370e-01  grad=2.150e+01  t_iter=0.22s  t_cumul=15.2s
+    rec   11  J=2.678177e+01  dJ=4.418e-01  grad=2.640e+01  t_iter=0.23s  t_cumul=16.5s
+    rec   12  J=2.663537e+01  dJ=1.464e-01  grad=1.667e+01  t_iter=0.22s  t_cumul=17.7s
+    rec   13  J=2.652402e+01  dJ=1.113e-01  grad=5.608e+01  t_iter=0.22s  t_cumul=18.8s
+    rec   14  J=2.641307e+01  dJ=1.110e-01  grad=1.304e+01  t_iter=0.22s  t_cumul=19.9s
+    rec   15  J=2.630041e+01  dJ=1.127e-01  grad=3.839e+01  t_iter=0.22s  t_cumul=21.0s
+    rec   16  J=2.624046e+01  dJ=5.996e-02  grad=4.339e+01  t_iter=0.26s  t_cumul=22.5s
+    rec   17  J=2.616663e+01  dJ=7.383e-02  grad=4.281e+01  t_iter=0.22s  t_cumul=23.8s
+    rec   18  J=2.607850e+01  dJ=8.812e-02  grad=2.882e+01  t_iter=0.21s  t_cumul=24.9s
+    rec   19  J=2.603517e+01  dJ=4.333e-02  grad=3.936e+01  t_iter=0.22s  t_cumul=26.1s
+    rec   20  J=2.599393e+01  dJ=4.125e-02  grad=1.436e+01  t_iter=0.22s  t_cumul=27.3s
+    rec   21  J=2.594247e+01  dJ=5.145e-02  grad=2.310e+01  t_iter=0.22s  t_cumul=28.4s
+    rec   22  J=2.591278e+01  dJ=2.969e-02  grad=5.346e+01  t_iter=0.22s  t_cumul=29.6s
+    rec   23  J=2.585342e+01  dJ=5.936e-02  grad=4.594e+01  t_iter=0.23s  t_cumul=30.9s
+    rec   24  J=2.583650e+01  dJ=1.692e-02  grad=3.529e+01  t_iter=0.44s  t_cumul=32.3s
+    rec   25  J=2.579239e+01  dJ=4.411e-02  grad=1.128e+01  t_iter=0.24s  t_cumul=33.4s
+    rec   26  J=2.576426e+01  dJ=2.813e-02  grad=3.050e+01  t_iter=0.21s  t_cumul=34.5s
+    rec   27  J=2.575008e+01  dJ=1.418e-02  grad=1.795e+01  t_iter=0.25s  t_cumul=35.6s
+    rec   28  J=2.571106e+01  dJ=3.902e-02  grad=4.984e+01  t_iter=0.22s  t_cumul=36.7s
+    rec   29  J=2.570017e+01  dJ=1.090e-02  grad=1.791e+01  t_iter=0.53s  t_cumul=38.4s
+    rec   30  J=2.567572e+01  dJ=2.445e-02  grad=3.167e+01  t_iter=0.28s  t_cumul=39.7s
+    rec   31  J=2.563247e+01  dJ=4.325e-02  grad=2.603e+01  t_iter=0.27s  t_cumul=41.0s
+    rec   32  J=2.560095e+01  dJ=3.152e-02  grad=1.108e+01  t_iter=0.27s  t_cumul=42.5s
+    rec   33  J=2.556723e+01  dJ=3.373e-02  grad=1.771e+01  t_iter=0.22s  t_cumul=43.9s
+
+  Sub-step timings (mean over recorded steps)
+  -------------------------------------------
+    t_forward           : mean=0.222s  max=0.273s
+    t_adjoint           : mean=0.007s  max=0.009s
+    t_gradient          : mean=0.001s  max=0.001s
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 300
+    Fine N_T        : 200
+    elapsed_valid   : 5.40 s
+    IV MAE          : 0.023242
+    IV RMSE         : 0.033050
+    IV max error    : 0.111081
+    n valid points  : 74
+
+======================================================================

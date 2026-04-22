@@ -1,0 +1,52 @@
+======================================================================
+  Experiment log  --  2026-04-22 07:24:11
+======================================================================
+
+  Parameters
+  ----------
+    Method          : oe-price
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 40
+    N_T (calib)     : 30
+    alpha           : 1.00e-03
+    max_iter        : 30
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : 1.386951e+02
+    grad_norm       : 3.660863e+03
+    n_iter          : 30
+    converged       : False
+    elapsed_calib   : 7.96 s
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+    rec    1  J=6.857985e+01  dJ=     ---  grad=1.705e+01  t_iter=0.28s  t_cumul=0.3s
+    rec    2  J=1.108728e+02  dJ=1.013e+02  grad=8.342e+02  t_iter=0.29s  t_cumul=1.6s
+    rec    3  J=3.793980e+02  dJ=2.430e+02  grad=7.190e+03  t_iter=0.33s  t_cumul=3.3s
+    rec    4  J=6.402161e+02  dJ=4.875e+02  grad=1.049e+04  t_iter=0.24s  t_cumul=4.4s
+    rec    5  J=8.340483e+02  dJ=7.175e+02  grad=1.270e+04  t_iter=0.23s  t_cumul=5.6s
+    rec    6  J=2.365501e+02  dJ=9.390e+03  grad=2.371e+03  t_iter=0.24s  t_cumul=6.7s
+    rec    7  J=1.322396e+03  dJ=1.146e+03  grad=1.470e+04  t_iter=0.28s  t_cumul=8.0s
+
+  Sub-step timings (mean over recorded steps)
+  -------------------------------------------
+    t_forward           : mean=0.252s  max=0.320s
+    t_adjoint           : mean=0.010s  max=0.013s
+    t_gradient          : mean=0.001s  max=0.002s
+    t_oe_solve          : mean=0.006s  max=0.043s
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 80
+    Fine N_T        : 60
+    elapsed_valid   : 0.96 s
+    IV MAE          : 0.097750
+    IV RMSE         : 0.116813
+    IV max error    : 0.435378
+    n valid points  : 50
+
+======================================================================

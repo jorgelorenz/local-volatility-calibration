@@ -1,0 +1,106 @@
+======================================================================
+  Experiment log  --  2026-04-22 08:57:53
+======================================================================
+
+  Parameters
+  ----------
+    Method          : oe-iv
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 80
+    N_T (calib)     : 60
+    alpha           : 1.00e-03
+    max_iter        : 300
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : 2.602920e+02
+    grad_norm       : 5.865053e+03
+    n_iter          : 300
+    converged       : False
+    elapsed_calib   : 528.12 s
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+    rec    1  J=2.699000e+01  dJ=     ---  grad=1.286e+01  t_iter=1.82s  t_cumul=1.8s
+    rec    2  J=6.029217e+01  dJ=3.053e+00  grad=1.671e+04  t_iter=1.76s  t_cumul=8.8s
+    rec    3  J=8.365471e+01  dJ=1.515e+02  grad=5.024e+03  t_iter=1.43s  t_cumul=17.4s
+    rec    4  J=1.241666e+02  dJ=1.487e+01  grad=2.174e+04  t_iter=1.95s  t_cumul=25.8s
+    rec    5  J=1.992240e+02  dJ=1.348e+02  grad=1.802e+03  t_iter=1.29s  t_cumul=33.8s
+    rec    6  J=3.548965e+02  dJ=5.100e+02  grad=6.034e+03  t_iter=1.54s  t_cumul=42.0s
+    rec    7  J=1.371433e+03  dJ=9.134e+02  grad=9.295e+03  t_iter=1.79s  t_cumul=50.4s
+    rec    8  J=3.231206e+02  dJ=5.938e+01  grad=1.044e+04  t_iter=1.86s  t_cumul=59.0s
+    rec    9  J=4.626248e+02  dJ=6.754e+01  grad=5.117e+03  t_iter=1.54s  t_cumul=67.4s
+    rec   10  J=1.027069e+03  dJ=1.176e+01  grad=7.943e+03  t_iter=1.73s  t_cumul=75.9s
+    rec   11  J=9.716119e+02  dJ=5.081e+01  grad=9.904e+03  t_iter=1.71s  t_cumul=84.5s
+    rec   12  J=3.677989e+02  dJ=1.974e+02  grad=4.048e+03  t_iter=1.87s  t_cumul=93.9s
+    rec   13  J=1.376259e+02  dJ=3.889e+02  grad=2.096e+04  t_iter=1.80s  t_cumul=102.6s
+    rec   14  J=7.488662e+02  dJ=1.219e+02  grad=3.596e+03  t_iter=1.76s  t_cumul=111.2s
+    rec   15  J=1.690437e+02  dJ=4.938e+02  grad=1.448e+04  t_iter=1.88s  t_cumul=120.3s
+    rec   16  J=2.986130e+02  dJ=4.069e+02  grad=5.377e+03  t_iter=1.82s  t_cumul=129.0s
+    rec   17  J=8.403790e+02  dJ=6.746e+02  grad=1.281e+03  t_iter=1.82s  t_cumul=137.8s
+    rec   18  J=1.617674e+03  dJ=1.361e+03  grad=2.687e+01  t_iter=1.78s  t_cumul=146.4s
+    rec   19  J=2.167291e+02  dJ=6.168e+02  grad=7.645e+03  t_iter=1.66s  t_cumul=155.1s
+    rec   20  J=1.188019e+03  dJ=4.213e+02  grad=1.526e+03  t_iter=1.77s  t_cumul=164.1s
+    rec   21  J=2.544895e+02  dJ=8.637e+02  grad=6.947e+03  t_iter=1.60s  t_cumul=172.5s
+    rec   22  J=1.508002e+03  dJ=1.375e+03  grad=1.582e+02  t_iter=1.77s  t_cumul=181.3s
+    rec   23  J=3.053253e+02  dJ=9.579e+02  grad=2.222e+02  t_iter=1.58s  t_cumul=190.0s
+    rec   24  J=1.050570e+03  dJ=8.895e+02  grad=4.273e+03  t_iter=1.74s  t_cumul=198.9s
+    rec   25  J=1.132249e+03  dJ=5.773e+02  grad=9.050e+02  t_iter=1.73s  t_cumul=207.8s
+    rec   26  J=7.647356e+02  dJ=6.504e+02  grad=2.264e+03  t_iter=1.75s  t_cumul=216.6s
+    rec   27  J=1.225372e+03  dJ=1.001e+03  grad=1.047e+03  t_iter=1.98s  t_cumul=225.3s
+    rec   28  J=1.422930e+03  dJ=1.010e+03  grad=9.245e+02  t_iter=1.73s  t_cumul=233.7s
+    rec   29  J=1.596597e+03  dJ=1.407e+03  grad=2.853e+01  t_iter=1.79s  t_cumul=242.5s
+    rec   30  J=9.743235e+02  dJ=7.847e+02  grad=1.241e+03  t_iter=1.78s  t_cumul=251.3s
+    rec   31  J=6.709470e+02  dJ=1.817e+02  grad=8.935e+03  t_iter=1.67s  t_cumul=260.0s
+    rec   32  J=7.722669e+02  dJ=7.491e+02  grad=4.117e+03  t_iter=1.72s  t_cumul=268.9s
+    rec   33  J=8.565520e+02  dJ=4.256e+02  grad=1.742e+03  t_iter=1.70s  t_cumul=277.7s
+    rec   34  J=7.915589e+02  dJ=2.319e+02  grad=1.435e+03  t_iter=1.81s  t_cumul=286.2s
+    rec   35  J=8.148573e+02  dJ=6.465e+02  grad=4.379e+03  t_iter=1.77s  t_cumul=295.8s
+    rec   36  J=1.401211e+03  dJ=1.034e+03  grad=1.718e+02  t_iter=1.73s  t_cumul=304.8s
+    rec   37  J=1.532372e+03  dJ=1.374e+03  grad=4.359e+01  t_iter=1.78s  t_cumul=313.5s
+    rec   38  J=3.118701e+02  dJ=8.434e+02  grad=4.983e+03  t_iter=1.63s  t_cumul=322.3s
+    rec   39  J=7.375859e+02  dJ=3.169e+02  grad=1.230e+03  t_iter=1.75s  t_cumul=331.3s
+    rec   40  J=1.536848e+03  dJ=1.270e+03  grad=3.170e+01  t_iter=1.76s  t_cumul=339.8s
+    rec   41  J=1.509678e+03  dJ=1.250e+03  grad=1.528e+02  t_iter=1.78s  t_cumul=349.0s
+    rec   42  J=1.159272e+03  dJ=3.754e+02  grad=9.321e+02  t_iter=1.82s  t_cumul=358.3s
+    rec   43  J=3.057603e+02  dJ=1.220e+02  grad=5.517e+03  t_iter=1.80s  t_cumul=367.2s
+    rec   44  J=1.433943e+03  dJ=9.370e+01  grad=9.127e+01  t_iter=1.73s  t_cumul=376.0s
+    rec   45  J=7.726774e+02  dJ=4.973e+02  grad=1.794e+03  t_iter=1.74s  t_cumul=385.3s
+    rec   46  J=8.395651e+02  dJ=1.560e+01  grad=5.500e+03  t_iter=1.58s  t_cumul=394.0s
+    rec   47  J=5.028876e+02  dJ=1.302e+02  grad=9.521e+03  t_iter=1.73s  t_cumul=402.9s
+    rec   48  J=7.115662e+02  dJ=7.751e+02  grad=1.322e+03  t_iter=1.68s  t_cumul=411.8s
+    rec   49  J=1.766679e+02  dJ=9.529e+02  grad=2.474e+04  t_iter=2.07s  t_cumul=421.0s
+    rec   50  J=1.551145e+03  dJ=8.477e+02  grad=1.872e+01  t_iter=1.78s  t_cumul=429.9s
+    rec   51  J=1.760833e+02  dJ=1.193e+03  grad=4.558e+03  t_iter=1.54s  t_cumul=438.5s
+    rec   52  J=5.256633e+02  dJ=2.376e+02  grad=3.801e+03  t_iter=1.71s  t_cumul=447.8s
+    rec   53  J=3.492330e+02  dJ=7.344e+02  grad=6.189e+03  t_iter=1.89s  t_cumul=456.6s
+    rec   54  J=1.588025e+03  dJ=1.395e+03  grad=1.560e+01  t_iter=1.75s  t_cumul=465.0s
+    rec   55  J=1.290850e+03  dJ=2.341e+02  grad=8.728e+02  t_iter=1.77s  t_cumul=474.0s
+    rec   56  J=1.408434e+03  dJ=1.250e+03  grad=9.284e+01  t_iter=1.81s  t_cumul=482.9s
+    rec   57  J=1.566757e+02  dJ=9.655e+01  grad=2.014e+04  t_iter=2.13s  t_cumul=492.8s
+    rec   58  J=1.557237e+03  dJ=1.308e+03  grad=1.992e+01  t_iter=1.75s  t_cumul=501.5s
+    rec   59  J=7.399774e+02  dJ=7.744e+02  grad=6.518e+03  t_iter=1.84s  t_cumul=510.4s
+    rec   60  J=6.949061e+02  dJ=7.202e+02  grad=3.120e+03  t_iter=1.76s  t_cumul=519.3s
+    rec   61  J=3.532248e+02  dJ=5.734e+02  grad=3.389e+03  t_iter=1.83s  t_cumul=528.1s
+
+  Sub-step timings (mean over recorded steps)
+  -------------------------------------------
+    t_forward           : mean=0.454s  max=0.542s
+    t_adjoint           : mean=0.655s  max=0.827s
+    t_gradient          : mean=0.001s  max=0.002s
+    t_oe_solve          : mean=0.001s  max=0.015s
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 300
+    Fine N_T        : 200
+    elapsed_valid   : 5.20 s
+    IV MAE          : 0.320131
+    IV RMSE         : 0.373701
+    IV max error    : 0.655236
+    n valid points  : 76
+
+======================================================================

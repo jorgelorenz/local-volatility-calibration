@@ -1,0 +1,51 @@
+======================================================================
+  Experiment log  --  2026-04-22 07:43:46
+======================================================================
+
+  Parameters
+  ----------
+    Method          : dto-iv
+    Asset index     : 0
+    Asset name      : DJ_EUROSTOXX_50
+    N_K (calib)     : 40
+    N_T (calib)     : 30
+    alpha           : 1.00e-02
+    max_iter        : 300
+    theta           : 0.5
+    sigma_bounds    : (0.01, 1.5)
+
+  Calibration results
+  -------------------
+    J_final         : 1.338066e+01
+    grad_norm       : 1.160106e+01
+    n_iter          : 21
+    n_fevals        : 191
+    success         : True
+    message         : CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+    elapsed_calib   : 96.05 s
+
+  J convergence history (every recorded step)
+  -------------------------------------------
+    rec    1  J=2.440298e+01  dJ=     ---  grad=9.862e+00  t_iter=2.83s  t_cumul=2.8s
+    rec    2  J=1.610581e+01  dJ=8.297e+00  grad=4.923e+01  t_iter=1.48s  t_cumul=7.9s
+    rec    3  J=1.482532e+01  dJ=1.280e+00  grad=3.611e+00  t_iter=14.83s  t_cumul=41.7s
+    rec    4  J=1.368278e+01  dJ=1.143e+00  grad=1.557e+01  t_iter=1.80s  t_cumul=48.3s
+    rec    5  J=1.338066e+01  dJ=3.021e-01  grad=1.160e+01  t_iter=13.50s  t_cumul=85.7s
+
+  Sub-step timings (mean over recorded steps)
+  -------------------------------------------
+    t_forward           : mean=0.133s  max=0.179s
+    t_adjoint           : mean=0.181s  max=0.188s
+    t_gradient          : mean=0.001s  max=0.001s
+
+  Validation (fine grid)
+  ----------------------
+    Fine N_K        : 300
+    Fine N_T        : 200
+    elapsed_valid   : 5.30 s
+    IV MAE          : 0.015514
+    IV RMSE         : 0.020362
+    IV max error    : 0.068674
+    n valid points  : 74
+
+======================================================================
