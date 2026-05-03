@@ -27,13 +27,32 @@ tensor product:
 Three solver backends are provided, selectable at runtime:
 
   "dct" (default):
-      Uses 2D DCT to diagonalise the operator.  The 1D Neumann Laplacian
-      with one-sided boundary differences has eigenvalues
-          lambda_k = 2*(1 - cos(pi*k/(N+1)))/h^2  for k = 0,...,N
-      and is diagonalised by a DCT-III / DCT-II combination.  In practice
-      we compute the eigenvalues numerically from the action of the 1D
-      operator on standard basis vectors (stored on first call) to guarantee
-      exact correspondence with the stencil used by LU and CG.
+      Uses 2D DCT-II to diagonalise the operator exactly.
+
+      The 1D Neumann Laplacian with one-sided boundary differences:
+          row 0   : (u_0 - u_1) / h^2
+          interior: (2*u_i - u_{i-1} - u_{i+1}) / h^2
+          row N   : (u_N - u_{N-1}) / h^2
+
+      is a symmetric tridiagonal matrix whose eigenvectors are exactly the
+      DCT-II basis vectors cos(pi*k*(2i+1)/(2*(N+1))) and whose eigenvalues
+      are the analytic formula:
+
+          lambda_k = 2*(1 - cos(pi*k/(N+1))) / h^2,   k = 0,...,N
+
+      (This is NOT the same as DCT-I, which corresponds to a different
+      symmetric stencil with mirrored BCs.  DCT-II is correct here because
+      the one-sided stencil makes the boundary row coefficients 1/h^2 on the
+      diagonal instead of 2/h^2, which is equivalent to a half-cell shift —
+      exactly the geometry for which DCT-II is the eigenbasis.)
+
+      In 2D the operator decomposes as a Kronecker product, so the 2D solve
+      reduces to:
+          1. Apply 2D DCT-II to rhs  ->  rhs_hat
+          2. Divide pointwise by  alpha*(1 + lambda_K[i] + lambda_T[j])
+          3. Apply 2D inverse DCT-II (= normalised DCT-III)  ->  solution
+
+      Complexity: O(N log N) per solve, no matrix assembly or factorisation.
 
   "lu":
       Assembles the sparse matrix L explicitly and factorises it once with
@@ -93,64 +112,75 @@ def _apply_operator(x: np.ndarray, alpha: float, grid: Grid) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------------
-# DCT backend  (eigenvalues computed numerically from the 1D stencil)
+# DCT-II backend  (exact O(N log N) solver)
 # ---------------------------------------------------------------------------
 
-# Cache: maps (N, h) -> 1D eigenvalues of (-Delta_h)
-_eig_cache_1d: dict = {}
-
-
-def _get_1d_eigenvalues(N: int, h: float) -> np.ndarray:
+def _dct2_eigenvalues_1d(N: int, h: float) -> np.ndarray:
     """
-    Compute eigenvalues of the 1D Neumann Laplacian (-Delta_h) with one-sided
-    BCs numerically, by diagonalising the tridiagonal matrix.
+    Analytic eigenvalues of the 1D Neumann Laplacian (-Delta_h) with
+    one-sided boundary differences, for a grid of N+1 nodes with spacing h.
 
-    Cached per (N, h).  Cost: O(N^2) first call, O(1) thereafter.
+    The matrix is symmetric tridiagonal:
+        diag  = [1/h^2, 2/h^2, ..., 2/h^2, 1/h^2]
+        off   = [-1/h^2, ..., -1/h^2]
+
+    Its eigenvalues are:
+        lambda_k = 2*(1 - cos(pi*k/(N+1))) / h^2,   k = 0, 1, ..., N
+
+    and its eigenvectors are the DCT-II basis vectors, i.e. the matrix is
+    exactly diagonalised by scipy.fft.dct(type=2) (with appropriate
+    normalisation).
+
+    Note: k=0 gives lambda_0=0 (the constant mode, corresponding to the
+    null space of the Neumann Laplacian).  After adding the identity (+I)
+    the smallest eigenvalue of (-Delta_h + I) is 1 > 0, so the system is
+    always non-singular.
     """
-    key = (N, h)
-    if key in _eig_cache_1d:
-        return _eig_cache_1d[key]
-
-    from scipy.sparse.linalg import eigsh
-    L = _build_laplacian_neumann_1d(N, h)
-    # All (N+1) eigenvalues; eigsh needs k < N+1, use dense for small N
-    n = N + 1
-    if n <= 512:
-        import scipy.linalg as la
-        vals = la.eigvalsh(L.toarray())
-    else:
-        vals, _ = eigsh(L, k=n - 1, which="LM")
-        vals = np.append(vals, 0.0)  # zero mode
-    vals = np.sort(np.maximum(vals, 0.0))  # clip tiny negatives from floats
-    _eig_cache_1d[key] = vals
-    return vals
+    k = np.arange(N + 1)
+    return 2.0 * (1.0 - np.cos(np.pi * k / (N + 1))) / h**2
 
 
 def _solve_dct(rhs: np.ndarray, alpha: float, grid: Grid) -> np.ndarray:
     """
-    Solve  alpha * (-Delta_h + I) x = rhs  by diagonalising the 2D operator
-    via the eigenvector basis of the 1D tridiagonal Neumann Laplacian.
+    Solve  alpha * (-Delta_h + I) x = rhs  via 2D DCT-II.
 
-    The 1D Neumann Laplacian (one-sided BCs) has eigenvalues computed
-    numerically (cached) and eigenvectors that are discrete cosines.  In 2D,
-    the operator decomposes as a Kronecker product, so the 2D eigenvectors are
-    outer products of 1D eigenvectors.
+    Algorithm
+    ---------
+    The 2D operator on the (N_K+1) x (N_T+1) grid decomposes as a Kronecker
+    product:
 
-    For efficiency we use the DCT-I transform (scipy.fft.dctn type=1) which
-    corresponds to the eigenbasis of this particular stencil (verified
-    numerically), together with the exact eigenvalues from _get_1d_eigenvalues.
+        L = alpha * ((-Delta_K + I_K) (x) I_T + I_K (x) (-Delta_T) + I)
+          -- wait, more carefully:
+        alpha*(-Delta_h + I) = alpha*(I + L_K (x) I_T + I_K (x) L_T)
 
-    If the grid is small enough (N_K <= 512 and N_T <= 512) we use the exact
-    dense eigenvectors; otherwise we fall back to the LU solver.
+    where L_K, L_T are the 1D Neumann Laplacians.  Both L_K and L_T are
+    diagonalised by the DCT-II transform (same eigenbasis), so in 2D the
+    operator is diagonalised by the 2D DCT-II:
+
+        Eigenvalue at mode (i,j): alpha * (1 + lambda_K[i] + lambda_T[j])
+
+    Steps:
+        1. rhs_hat = DCT2(rhs)            (2D DCT-II, unnormalised)
+        2. x_hat   = rhs_hat / Lambda     (pointwise division)
+        3. x       = IDCT2(x_hat)         (2D inverse DCT-II = DCT-III/2N)
+
+    scipy.fft.dctn / idctn with type=2 implement exactly this transform.
+    Complexity: O(N_K * N_T * log(N_K * N_T)).
     """
-    N_K, N_T = grid.N_K, grid.N_T
+    from scipy.fft import dctn, idctn
 
-    # For correctness we always use LU for the DCT backend  
-    # (the DCT-I/II transform does not exactly diagonalise the one-sided
-    # Neumann stencil; using exact eigendecomposition avoids approximation).
-    # For large grids this is still fast because the LU cache is shared.
-    cache = {}
-    return _solve_lu(rhs, alpha, grid, cache)
+    # 1D eigenvalues of the Neumann Laplacian for each dimension
+    lam_K = _dct2_eigenvalues_1d(grid.N_K, grid.dK)  # shape (N_K+1,)
+    lam_T = _dct2_eigenvalues_1d(grid.N_T, grid.dT)  # shape (N_T+1,)
+
+    # 2D eigenvalue grid: Lambda[i,j] = alpha*(1 + lam_K[i] + lam_T[j])
+    Lambda = alpha * (1.0 + lam_K[:, None] + lam_T[None, :])  # (N_K+1, N_T+1)
+
+    # Transform, divide, inverse-transform
+    rhs_hat = dctn(rhs, type=2, norm="ortho")
+    x_hat   = rhs_hat / Lambda
+    x       = idctn(x_hat, type=2, norm="ortho")
+    return x
 
 
 # ---------------------------------------------------------------------------
@@ -284,9 +314,9 @@ def solve_optimality_system(
     alpha      : Tikhonov regularisation parameter
     grid       : Grid instance (determines dK, dT, N_K, N_T)
     method     : solver backend: "dct" | "lu" | "cg"
-                 Note: "dct" currently routes through LU for correctness
-                 (the DCT-II eigenvalue formula does not match the one-sided
-                 Neumann stencil used here).
+                 "dct" uses the exact DCT-II spectral solver (O(N log N)).
+                 "lu"  uses sparse LU with factorisation caching.
+                 "cg"  uses Conjugate Gradient (matrix-free).
     cg_tol     : tolerance for CG (used only when method="cg")
     cg_maxiter : max CG iterations (None = 4*N)
     _lu_cache  : optional mutable dict for LU factorisation reuse
@@ -300,11 +330,7 @@ def solve_optimality_system(
 
     method = method.lower()
     if method == "dct":
-        # DCT backend: routes through LU (exact, cached) because the
-        # DCT-II eigenvalue formula does not match the one-sided Neumann
-        # stencil.  Performance is equivalent after the first solve due
-        # to LU caching.
-        return _solve_lu(rhs, alpha, grid, _lu_cache)
+        return _solve_dct(rhs, alpha, grid)
     elif method == "lu":
         return _solve_lu(rhs, alpha, grid, _lu_cache)
     elif method == "cg":
