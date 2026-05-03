@@ -14,11 +14,14 @@ adjoint_solver            : Solve adjoint PDE         (backward in T)
 regularization            : Tikhonov regularization matrices and evaluations
 objective                 : Evaluate J(u, C, z, alpha)
 gradient                  : Evaluate gradient nabla J via discrete adjoint
-calibration               : Main optimizer loop (L-BFGS-B)
+calibration               : Main optimizer loop (L-BFGS-B, FD backend)
+calibration_fem           : Optimizer loop using FEM state/adjoint solvers
 fem_mesh                  : FEM mesh utilities (uniform, graded, bisection refinement)
 fem_state_solver          : FEM P1 forward Dupire solver (manual assembly)
-fem_backward_solver       : FEM P1 backward local-vol solver (manual assembly)
+fem_backward_solver       : FEM P1 backward local-vol solver + adjoint (manual assembly)
 slv_pricer                : SLV 2D backward PDE solver (Craig-Sneyd ADI)
+slv_fokker_planck         : 2D Fokker-Planck density solver (Craig-Sneyd ADI)
+slv_calibration           : SLV leverage function calibration (iterative FP matching)
 fem_state_solver_fenics   : FEM P1 forward Dupire solver  (FEniCS, optional)
 fem_backward_solver_fenics: FEM P1 backward local-vol solver (FEniCS, optional)
 """
@@ -30,12 +33,15 @@ from .state_solver import solve_state
 from .adjoint_solver import solve_adjoint
 from .regularization import tikhonov_value, tikhonov_gradient
 from .objective import evaluate_J
-from .gradient import evaluate_gradient
+from .gradient import evaluate_gradient, evaluate_fem_gradient
 from .calibration import calibrate
+from .calibration_fem import calibrate_fem
 from .fem_mesh import uniform_mesh, graded_mesh, bisection_refine, make_mesh
 from .fem_state_solver import solve_fem_state
-from .fem_backward_solver import solve_fem_backward, solve_fem_backward_grid
+from .fem_backward_solver import solve_fem_backward, solve_fem_backward_grid, solve_fem_adjoint
 from .slv_pricer import solve_slv
+from .slv_fokker_planck import solve_fokker_planck
+from .slv_calibration import calibrate_leverage, SLVCalibrationResult
 
 # FEniCS solvers are optional (require a FEniCS-enabled environment)
 try:
@@ -57,14 +63,17 @@ __all__ = [
     "solve_adjoint",
     "tikhonov_value", "tikhonov_gradient",
     "evaluate_J",
-    "evaluate_gradient",
+    "evaluate_gradient", "evaluate_fem_gradient",
     "calibrate",
+    "calibrate_fem",
     # FEM (manual)
     "uniform_mesh", "graded_mesh", "bisection_refine", "make_mesh",
     "solve_fem_state",
-    "solve_fem_backward", "solve_fem_backward_grid",
+    "solve_fem_backward", "solve_fem_backward_grid", "solve_fem_adjoint",
     # SLV
     "solve_slv",
+    "solve_fokker_planck",
+    "calibrate_leverage", "SLVCalibrationResult",
     # FEniCS (optional)
     "solve_fem_state_fenics",
     "solve_fem_backward_fenics",

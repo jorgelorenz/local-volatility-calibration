@@ -26,10 +26,25 @@ where
 Note: the adjoint p already incorporates the dK*dT integration weights (they
 were included in the source term dJ/dC in the adjoint solver).
 
+FEM gradient
+------------
+evaluate_fem_gradient uses the FEM discrete adjoint.  For P1 elements, the
+derivative of the stiffness matrix A w.r.t. u at element midpoint e (shared
+by nodes i and i+1) is:
+
+  dA_e/d(u_mid_e) = dA_diff_e/d(u_mid_e)
+                  = K_mid_e^2 / (2*h_e) * [[1,-1],[-1,1]]
+
+The gradient w.r.t. u[i,n] accumulates over the two adjacent elements (e=i-1
+and e=i) and two time levels (n-1->n and n->n+1) via the CN averaging.
+
 Public API
 ----------
 evaluate_gradient(u, C, p, u_star, alpha, grid, theta=0.5)
     -> grad_J : np.ndarray shape (N_K+1, N_T+1)
+
+evaluate_fem_gradient(u, C, p, u_star, alpha, grid, theta=0.5, nodes=None)
+    -> grad_J : np.ndarray shape (N_nodes, N_T+1)
 """
 
 from __future__ import annotations
@@ -118,3 +133,184 @@ def evaluate_gradient(
     grad_J[-1, :] = 0.0
 
     return grad_J
+
+
+def evaluate_fem_gradient(
+    u: np.ndarray,
+    C: np.ndarray,
+    p: np.ndarray,
+    u_star: np.ndarray,
+    alpha: float,
+    grid: Grid,
+    theta: float = 0.5,
+    nodes: np.ndarray | None = None,
+) -> np.ndarray:
+    """
+    FEM gradient of J_alpha w.r.t. u via the discrete adjoint.
+
+    For P1 FEM with element e spanning [nodes[e], nodes[e+1]], the
+    stiffness matrix A_e depends on u_mid_e = (u[e,n] + u[e+1,n])/2.
+    The derivative of A_e w.r.t. u_mid_e is:
+
+        dA_diff_e / d(u_mid_e) = K_mid_e^2 / (2*h_e) * [[1,-1],[-1,1]]
+
+    The gradient of J w.r.t. u[i,n] sums contributions from all elements
+    adjacent to node i (elements e=i-1 and e=i), at time steps n-1->n and
+    n->n+1 (via the CN half-weight).
+
+    For each time step n -> n+1 and each element e:
+        dL/d(u_mid_e) = dT * p^{n+1} . (dA_e/du_mid) . (theta*C^{n+1} + (1-theta)*C^n)
+
+    where dA_e/du_mid has two contributions:
+        dA_diff/du_mid = K_mid^2/(2*h_e) * [[1,-1],[-1,1]]
+        dA_adv /du_mid = K_mid/2          * [[-1,+1],[-1,+1]]
+
+    The +sign on (1-theta)*C^n comes from differentiating the Lagrangian:
+        d(LHS)/du = +theta*dT*dA,  d(RHS)/du = -(1-theta)*dT*dA
+        => -d(RHS)/du * C^n = +(1-theta)*dT*dA*C^n
+
+    Chain rule: d(u_mid_e)/d(u[e,n]) = d(u_mid_e)/d(u[e+1,n]) = 0.25
+    (0.5 from spatial avg over element nodes, 0.5 from CN time avg)
+
+    Parameters
+    ----------
+    u      : local variance, shape (N_nodes, N_T+1)
+    C      : FEM state solution, shape (N_nodes, N_T+1)
+    p      : FEM adjoint solution, shape (N_nodes, N_T+1)
+    u_star : prior local variance, shape (N_nodes, N_T+1)
+    alpha  : regularization parameter
+    grid   : Grid instance
+    theta  : theta-scheme parameter (must match state/adjoint solvers)
+    nodes  : FEM node array; None => grid.K
+
+    Returns
+    -------
+    grad_J : shape (N_nodes, N_T+1)
+    """
+    if nodes is None:
+        nodes = grid.K.copy()
+
+    N_nodes = len(nodes)
+    N_T     = grid.N_T
+    dT      = grid.dT
+
+    grad_pde = np.zeros((N_nodes, N_T + 1))
+
+    for n in range(N_T):
+        # Loop over elements e = 0 .. N_nodes-2
+        for e in range(N_nodes - 1):
+            h_e    = nodes[e + 1] - nodes[e]
+            K_mid  = 0.5 * (nodes[e] + nodes[e + 1])
+
+            # Derivative of A_e w.r.t. u_mid_e (element midpoint variance):
+            #
+            # dA_diff_e/du_mid = K_mid^2/(2*h) * [[1,-1],[-1,1]]
+            # dA_adv_e/du_mid  = K_mid^2/2     * [[-1,+1],[-1,+1]]
+            #                    (from IBP correction: c_adv = (u_mid + q_adv)*K_mid,
+            #                     dc_adv/du_mid = K_mid, A_adv = c_adv/2*[[-1,+1],[-1,+1]])
+            #
+            # So (dA_e/du_mid) * v   (element vector action, indices 0=node e, 1=node e+1):
+            #   row 0: K_mid^2/(2h)*(v0-v1) + K_mid^2/2*(-v0+v1)
+            #   row 1: K_mid^2/(2h)*(v1-v0) + K_mid^2/2*(-v0+v1)
+            #
+            # In matrix form with x = (C[e], C[e+1]):
+            #   (dA_e/du) * x = [  K_mid^2/(2h)*(C[e]-C[e+1]) - K_mid^2/2*(C[e]-C[e+1]),
+            #                      K_mid^2/(2h)*(C[e+1]-C[e]) - K_mid^2/2*(C[e]-C[e+1]) ]
+            #
+            # Let dC = C[e] - C[e+1]:
+            #   (dA_e/du) * x = K_mid^2 * dC * [ 1/(2h) - 1/2,
+            #                                     -1/(2h) - 1/2 ]
+
+            # Effective C for this step: from Lagrangian differentiation,
+            #   d(LHS)/du = +theta*dT*dA,  d(RHS)/du = -(1-theta)*dT*dA
+            #   dL/du_mid = p^{n+1} . dA_e/du_mid . (theta*C^{n+1} + (1-theta)*C^n)
+            Ce_eff  = theta * C[e,     n + 1] + (1.0 - theta) * C[e,     n]
+            Ce1_eff = theta * C[e + 1, n + 1] + (1.0 - theta) * C[e + 1, n]
+
+            # (dA_e/du_mid) @ Ceff:
+            #   dA_diff/du_mid = K_mid^2/(2h) * [[1,-1],[-1,1]]
+            #   dA_adv /du_mid = K_mid/2       * [[-1,+1],[-1,+1]]
+            #     (because c_adv = (u_mid + q_adv)*K_mid => dc_adv/du_mid = K_mid,
+            #      and A_adv = (c_adv/2)*[[-1,+1],[-1,+1]])
+            dC_eff  = Ce_eff - Ce1_eff
+            r0 = K_mid**2 / (2.0 * h_e) * dC_eff + K_mid / 2.0 * (-Ce_eff  + Ce1_eff)
+            r1 = K_mid**2 / (2.0 * h_e) * (-dC_eff) + K_mid / 2.0 * (-Ce_eff  + Ce1_eff)
+
+            pe0 = p[e,     n + 1]
+            pe1 = p[e + 1, n + 1]
+
+            total_contrib = dT * (pe0 * r0 + pe1 * r1)
+
+            # Chain rule:
+            #   u_mid_e = 0.5*(u[e]+u[e+1])  (spatial average over element nodes)
+            #   u_avg[i] = 0.5*(u[i,n]+u[i,n+1])  (CN time average)
+            #   So d(u_mid_e)/d(u[e,n]) = d(u_mid_e)/d(u[e+1,n]) = 0.5 * 0.5 = 0.25
+            grad_pde[e,     n]     += 0.25 * total_contrib
+            grad_pde[e + 1, n]     += 0.25 * total_contrib
+            grad_pde[e,     n + 1] += 0.25 * total_contrib
+            grad_pde[e + 1, n + 1] += 0.25 * total_contrib
+
+    # Regularization (uses grid.dK and grid.dT, which match the uniform mesh;
+    # for custom nodes the regularization is still computed on the uniform grid
+    # since u_star and u have shape matching nodes when nodes=grid.K).
+    # We use a node-spacing-aware version for non-uniform meshes.
+    if nodes is grid.K or np.allclose(nodes, grid.K):
+        grad_reg = tikhonov_gradient(u, u_star, alpha, grid)
+    else:
+        # Generic: finite-difference regularization using actual node spacings
+        grad_reg = _fem_tikhonov_gradient(u, u_star, alpha, nodes, dT)
+
+    grad_J = grad_pde + grad_reg
+
+    # Zero out boundary nodes (not optimized)
+    grad_J[0,  :] = 0.0
+    grad_J[-1, :] = 0.0
+
+    return grad_J
+
+
+def _fem_tikhonov_gradient(
+    u: np.ndarray,
+    u_star: np.ndarray,
+    alpha: float,
+    nodes: np.ndarray,
+    dT: float,
+) -> np.ndarray:
+    """
+    H^1 Tikhonov gradient for a non-uniform node mesh.
+
+    Uses trapezoidal weights in K and uniform dT in time.
+    """
+    N_nodes, N_T1 = u.shape
+    d = u - u_star
+
+    # Trapezoidal weights for K integration
+    h = np.zeros(N_nodes)
+    h[0]    = 0.5 * (nodes[1] - nodes[0])
+    h[-1]   = 0.5 * (nodes[-1] - nodes[-2])
+    h[1:-1] = 0.5 * (nodes[2:] - nodes[:-2])
+
+    # L^2 contribution: alpha * h_i * dT * d[i,n]
+    g = alpha * dT * h[:, None] * d
+
+    # K-direction gradient: finite differences with local spacing
+    lap_K = np.zeros_like(d)
+    for i in range(1, N_nodes - 1):
+        hL = nodes[i]     - nodes[i - 1]
+        hR = nodes[i + 1] - nodes[i]
+        lap_K[i, :] = alpha * dT * h[i] * (
+            -(d[i + 1, :] - d[i, :]) / hR + (d[i, :] - d[i - 1, :]) / hL
+        ) / (0.5 * (hL + hR))
+    lap_K[0,  :] = 0.0
+    lap_K[-1, :] = 0.0
+
+    # T-direction gradient: uniform spacing
+    dT2    = dT * dT
+    lap_T  = np.zeros_like(d)
+    lap_T[:, 1:-1] = alpha * dT * h[:, None] * (
+        2.0 * d[:, 1:-1] - d[:, :-2] - d[:, 2:]
+    ) / dT2
+    lap_T[:, 0 ] = alpha * dT * h * (d[:, 0]  - d[:, 1])  / dT2
+    lap_T[:, -1] = alpha * dT * h * (d[:, -1] - d[:, -2]) / dT2
+
+    return g + lap_K + lap_T

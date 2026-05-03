@@ -61,6 +61,11 @@ Convenience wrapper
 solve_fem_backward_grid(sigma2, grid, K_strike, theta=0.5, nodes=None)
     -> V  shape (N_nodes, N_T+1)
 
+FEM adjoint solver
+------------------
+solve_fem_adjoint(u, C, z, w, grid, theta=0.5, nodes=None, source_override=None)
+    -> p  shape (N_nodes, N_T+1)
+
     Uses a Grid instance (same as FD solver) for compatibility.
     sigma2 : local variance (sigma^2), shape (N_nodes, N_T+1)
     K_strike : strike for European call payoff
@@ -293,3 +298,121 @@ def solve_fem_backward_grid(
         bc_right_func=bc_right_func,
         theta=theta,
     )
+
+
+# ---------------------------------------------------------------------------
+# FEM adjoint solver (for use in FEM-based calibration)
+# ---------------------------------------------------------------------------
+
+def solve_fem_adjoint(
+    u: np.ndarray,
+    C: np.ndarray,
+    z: np.ndarray,
+    w: np.ndarray,
+    grid: Grid,
+    theta: float = 0.5,
+    nodes: np.ndarray | None = None,
+    source_override: np.ndarray | None = None,
+) -> np.ndarray:
+    """
+    Solve the FEM discrete adjoint equation backward in maturity T.
+
+    The adjoint equation is the transpose of the FEM state system.  For each
+    interior time step k the system is:
+
+        (M + theta*dT*A^{k-1})^T p^k_int
+            = (M - (1-theta)*dT*A^k)^T p^{k+1}_int  -  dJ/dC^k_int
+
+    where  dJ/dC^k_int = dK_eff * dT * w_int[:,k] * (C_int[:,k] - z_int[:,k])
+    and dK_eff is the effective FEM node spacing (grid.dK when nodes=grid.K).
+
+    Since M and A are symmetric tridiagonal for P1 FEM, the transpose equals
+    the original matrix, so we solve the same systems as the forward state
+    solver but driven by the misfit source.
+
+    Parameters
+    ----------
+    u               : local variance sigma^2, shape (N_nodes, N_T+1)
+    C               : FEM state solution (call prices), shape (N_nodes, N_T+1)
+    z               : observed call prices, shape (N_nodes, N_T+1); NaN -> 0
+    w               : weight array, shape (N_nodes, N_T+1); NaN -> 0
+    grid            : Grid instance (T, dT, rates)
+    theta           : theta-scheme (must match state solver)
+    nodes           : FEM node array; None => grid.K
+    source_override : optional raw source override (same shape as C),
+                      replaces w*(C-z) if provided.  dK*dT factor is applied
+                      internally.
+
+    Returns
+    -------
+    p : adjoint variable, shape (N_nodes, N_T+1), p=0 at boundary nodes
+    """
+    if nodes is None:
+        nodes = grid.K.copy()
+
+    N_nodes = len(nodes)
+    N_T     = grid.N_T
+    T       = grid.T
+    dT      = grid.dT
+
+    # Effective integration weight in K direction: mean spacing around each node
+    # For uniform mesh this equals dK; for non-uniform we use trapezoidal weights.
+    h = np.zeros(N_nodes)
+    h[0]    = 0.5 * (nodes[1] - nodes[0])
+    h[-1]   = 0.5 * (nodes[-1] - nodes[-2])
+    h[1:-1] = 0.5 * (nodes[2:] - nodes[:-2])
+
+    # Build source array: dJ/dC^k = h_i * dT * w_i,k * (C_i,k - z_i,k)
+    if source_override is not None:
+        raw = np.where(~np.isnan(source_override), source_override, 0.0)
+    else:
+        diff  = C - z
+        valid = ~np.isnan(diff) & ~np.isnan(w)
+        raw   = np.where(valid, w * diff, 0.0)
+
+    # source[i, k] = h[i] * dT * raw[i, k]
+    source = (h[:, None] * dT) * raw   # shape (N_nodes, N_T+1)
+
+    p = np.zeros((N_nodes, N_T + 1))
+
+    def _get_matrices(n: int):
+        """Assemble (M, A) for time step n -> n+1."""
+        T_mid = 0.5 * (T[n] + T[n + 1])
+        r = float(grid.r_val(T_mid))
+        q = float(grid.q_val(T_mid))
+        u_nodes = 0.5 * (u[:, n] + u[:, n + 1])
+        M, A = _assemble(nodes, u_nodes, r, q)
+        return M, A
+
+    # ---- Terminal step: k = N_T ----
+    # (M + theta*dT*A^{N_T-1})^T p^{N_T}_int = -dJ/dC^{N_T}_int
+    # Since M and A are symmetric, ^T = identity here.
+    M, A = _get_matrices(N_T - 1)
+    LHS_full = M + theta * dT * A
+    LHS_int  = LHS_full[1:-1, 1:-1]
+    rhs      = -source[1:-1, N_T]
+    ab       = _tri_to_banded(LHS_int)
+    p[1:-1, N_T] = solve_banded((1, 1), ab, rhs)
+
+    # ---- Internal backward sweep: k = N_T-1, ..., 1 ----
+    for k in range(N_T - 1, 0, -1):
+        # LHS uses step k-1 -> k
+        M_km1, A_km1 = _get_matrices(k - 1)
+        LHS_full = M_km1 + theta * dT * A_km1
+        LHS_int  = LHS_full[1:-1, 1:-1]
+        ab       = _tri_to_banded(LHS_int)
+
+        # RHS contribution: (M - (1-theta)*dT*A^k)^T * p^{k+1}_int
+        # = (M - (1-theta)*dT*A^k) * p^{k+1}_int  (symmetric matrices)
+        M_k, A_k   = _get_matrices(k)
+        RHS_mat    = M_k - (1.0 - theta) * dT * A_k
+        p_next_int = p[1:-1, k + 1]
+
+        # Interior-interior block times p_next (BC corrections from columns 0,-1 are zero
+        # because adjoint BCs are homogeneous Dirichlet)
+        rhs = _apply_tri(RHS_mat[1:-1, 1:-1], p_next_int) - source[1:-1, k]
+
+        p[1:-1, k] = solve_banded((1, 1), ab, rhs)
+        # Boundary nodes remain 0 (homogeneous Dirichlet for adjoint)
+
+    return p
